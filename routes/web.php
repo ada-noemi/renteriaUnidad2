@@ -1,7 +1,25 @@
 <?php
 
+ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
+$frontendRoutes = [
+	'/',
+	'/categorias',
+	'/productos',
+	'/login',
+	'/carrito',
+	'/busqueda',
+	'/mapa-del-sitio',
+];
+
+foreach ($frontendRoutes as $path) {
+	Route::view($path, 'home');
+}
+
+Route::prefix('auth')->group(function (): void {
+	Route::get('/status', [AuthController::class, 'status']);
+	Route::post('/register', [AuthController::class, 'register']);
+	Route::post('/login', [AuthController::class, 'login']);
+	Route::post('/logout', [AuthController::class, 'logout']);
 });
