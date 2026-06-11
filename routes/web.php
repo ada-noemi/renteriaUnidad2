@@ -13,8 +13,6 @@ $frontendRoutes = [
 	'/categorias/reptiles',
 	'/categorias/roedores',
 	'/productos',
-	'/promociones',
-	'/mas-vendidos',
 	'/contacto',
 	'/ayuda',
 	'/registrar',
@@ -22,7 +20,6 @@ $frontendRoutes = [
 	'/login',
 	'/recuperacion',
 	'/chat',
-	'/carrito',
 	'/busqueda',
 	'/mapa-del-sitio',
 ];
@@ -36,4 +33,5 @@ Route::prefix('auth')->group(function (): void {
 	Route::post('/register', [AuthController::class, 'register']);
 	Route::post('/login', [AuthController::class, 'login']);
 	Route::post('/logout', [AuthController::class, 'logout']);
+	Route::post('/recover-password', [AuthController::class, 'recoverPassword']);
 });

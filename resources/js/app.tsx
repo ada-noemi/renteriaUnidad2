@@ -14,6 +14,11 @@ import RegisterView from './pages/RegisterView';
 import ProductsView from './pages/ProductsView';
 import SearchResultsView from './pages/SearchResultsView';
 import SitemapView from './pages/SitemapView';
+import MailboxView from './pages/MailboxView';
+import PasswordRecoveryView from './pages/PasswordRecoveryView';
+import ChatBotView from './pages/ChatBotView';
+import HelpView from './pages/HelpView';
+import ContactView from './pages/ContactView';
 import ErrorView from './pages/ErrorView';
 import PageLayout from './components/PageLayout';
 import { brandTheme } from './theme';
@@ -143,19 +148,19 @@ function AppRouter() {
         case '/mas-vendidos':
             return <SectionView title="Mas vendidos" description="Vista separada para mostrar productos con mayor demanda." />;
         case '/contacto':
-            return <SectionView title="Contacto" description="Vista dedicada para soporte, correo y medios de contacto." />;
+            return <ContactView />;
         case '/ayuda':
-            return <SectionView title="Ayuda" description="Vista separada con preguntas frecuentes, chat y recuperación." />;
+                        return <HelpView />;
         case '/registrar':
             return <RegisterView />;
         case '/buzon':
-            return renderProtectedView(<SectionView title="Buzon" description="Vista separada para mensajes y notificaciones del usuario." />);
+            return renderProtectedView(<MailboxView />);
         case '/login':
             return <LoginView />;
         case '/recuperacion':
-            return <SectionView title="Recuperacion de contraseña" description="Vista separada para recuperar acceso a la cuenta." />;
+            return <PasswordRecoveryView />;
         case '/chat':
-            return renderProtectedView(<SectionView title="Chat" description="Vista dedicada para atención y soporte en tiempo real." />);
+            return renderProtectedView(<ChatBotView />);
         case '/carrito':
             return <SectionView title="Carrito" description="Vista estática del carrito. Solo muestra la ubicación del elemento en la navegación, sin operaciones ni backend." />;
         case '/busqueda':

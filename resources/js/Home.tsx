@@ -132,7 +132,7 @@ export default function Home({ isAuthenticated }: { isAuthenticated: boolean }) 
                 </section>
             </main>
 
-            <SiteFooter categories={categories} helpLinks={helpLinks} />
+            <SiteFooter categories={categories} />
         </div>
     );
 }

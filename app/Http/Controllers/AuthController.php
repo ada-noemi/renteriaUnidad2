@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
@@ -83,6 +84,26 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Sesión cerrada correctamente.',
+        ]);
+    }
+
+    public function recoverPassword(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'email.exists' => 'No encontramos una cuenta con ese correo.',
+        ]);
+
+        User::query()
+            ->where('email', $payload['email'])
+            ->update([
+                'password' => Hash::make($payload['password']),
+            ]);
+
+        return response()->json([
+            'message' => 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.',
         ]);
     }
 

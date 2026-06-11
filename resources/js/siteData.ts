@@ -98,11 +98,9 @@ export const products: Product[] = [
 ];
 
 export const sitePages: SitePage[] = [
-    { id: 'inicio', title: 'Inicio', description: 'Portada principal del sitio.', href: '/', section: 'principal' },
+    { id: 'inicio', title: 'Inicio11', description: 'Portada principal del sitio.', href: '/', section: 'principal' },
     { id: 'categorias', title: 'Categorias', description: 'Explora categorias de mascotas.', href: '/categorias', section: 'principal' },
     { id: 'productos', title: 'Productos', description: 'Catalogo de productos disponibles.', href: '/productos', section: 'principal' },
-    { id: 'promociones', title: 'Promociones', description: 'Beneficios y promociones exclusivas.', href: '/promociones', section: 'principal' },
-    { id: 'mas-vendidos', title: 'Mas vendidos', description: 'Productos con mayor demanda.', href: '/mas-vendidos', section: 'principal' },
     { id: 'registrar', title: 'Registrar', description: 'Alta de nuevos usuarios.', href: '/registrar', section: 'adicional' },
     { id: 'buzon', title: 'Buzon', description: 'Mensajes y notificaciones.', href: '/buzon', section: 'adicional' },
     { id: 'login', title: 'Inicio de sesion', description: 'Acceso de usuarios registrados.', href: '/login', section: 'adicional' },

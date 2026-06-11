@@ -367,6 +367,12 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                             )}
                         </div>
 
+                        {!isRegister ? (
+                            <div style={{ marginTop: 8 }}>
+                                <a href="/recuperacion" style={{ color: brandTheme.orange, fontWeight: 700 }}>Olvide mi contrasena</a>
+                            </div>
+                        ) : null}
+
                         <div style={{ marginTop: 14, textAlign: 'center' }}>
                             <a
                                 href="/"
