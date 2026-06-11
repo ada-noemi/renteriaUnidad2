@@ -11,15 +11,16 @@ const formCardStyle: React.CSSProperties = {
     boxShadow: '0 18px 32px rgba(12, 40, 62, 0.1)',
 };
 
-export default function SearchResultsView() {
+export default function SearchResultsView({ canSearchProducts, authLoading }: { canSearchProducts: boolean; authLoading: boolean }) {
     const query = new URLSearchParams(window.location.search).get('q')?.trim() ?? '';
     const normalizedQuery = query.toLowerCase();
     const pageResults = normalizedQuery
         ? sitePages.filter((page) => `${page.title} ${page.description}`.toLowerCase().includes(normalizedQuery))
         : [];
-    const productResults = normalizedQuery
+    const allMatchingProducts = normalizedQuery
         ? products.filter((product) => `${product.name} ${product.category}`.toLowerCase().includes(normalizedQuery))
         : [];
+    const productResults = canSearchProducts ? allMatchingProducts : [];
     const hasQuery = query.length > 0;
     const hasResults = pageResults.length > 0 || productResults.length > 0;
 
@@ -40,6 +41,24 @@ export default function SearchResultsView() {
                             <strong style={{ color: brandTheme.navy }}>No se encontraron coincidencias.</strong>
                             <p style={{ marginBottom: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
                                 Prueba con palabras como productos, gatos, croquetas, ayuda o contacto.
+                            </p>
+                        </section>
+                    ) : null}
+
+                    {hasQuery && !authLoading && !canSearchProducts && allMatchingProducts.length > 0 ? (
+                        <section style={formCardStyle}>
+                            <strong style={{ color: brandTheme.navy }}>Hay productos relacionados en el catalogo completo.</strong>
+                            <p style={{ marginBottom: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
+                                Inicia sesión o regístrate para buscar también dentro de todas las categorias y productos privados del sitio.
+                            </p>
+                        </section>
+                    ) : null}
+
+                    {authLoading ? (
+                        <section style={formCardStyle}>
+                            <strong style={{ color: brandTheme.navy }}>Verificando acceso al catalogo...</strong>
+                            <p style={{ marginBottom: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
+                                En unos segundos sabremos si esta búsqueda puede incluir todos los productos o solo el contenido público.
                             </p>
                         </section>
                     ) : null}

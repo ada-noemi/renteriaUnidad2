@@ -12,7 +12,11 @@ const helpLinks = [
     'Chat',
 ];
 
-export default function Home() {
+const homeProductTypes = ['peces', 'perro', 'gato', 'pequenas-especies', 'aves', 'reptiles'] as const;
+
+export default function Home({ isAuthenticated }: { isAuthenticated: boolean }) {
+    const featuredProducts = homeProductTypes.flatMap((petType) => products.filter((product) => product.petType === petType).slice(0, 2));
+
     return (
         <div id="inicio" style={{ fontFamily: 'Segoe UI, sans-serif', background: brandTheme.bg, minHeight: '100vh', color: brandTheme.text }}>
             <SiteHeader />
@@ -79,11 +83,11 @@ export default function Home() {
                             <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Productos</span>
                             <h2 style={{ color: brandTheme.navy, margin: '4px 0 0', fontSize: 'clamp(24px, 4vw, 28px)' }}>Seccion principal del Home</h2>
                         </div>
-                        <span style={{ color: brandTheme.muted }}>Cards estaticas para definir la interfaz antes de agregar funciones</span>
+                        <span style={{ color: brandTheme.muted }}>Se muestran 2 productos por categoria en el inicio.</span>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-                        {products.map((product) => (
+                        {featuredProducts.map((product) => (
                             <article key={product.id} style={{ background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 14px 24px rgba(12, 40, 62, 0.08)' }}>
                                 <div style={{ padding: 14 }}>
                                     <div
@@ -110,12 +114,7 @@ export default function Home() {
                                                     mixBlendMode: 'multiply',
                                                 }}
                                             />
-                                        ) : (
-                                            <div style={{ textAlign: 'center', color: brandTheme.muted }}>
-                                                <strong style={{ display: 'block', color: brandTheme.navy, fontSize: 17, marginBottom: 6 }}>{product.name}</strong>
-                                                <span style={{ fontSize: 13 }}>Imagen pendiente</span>
-                                            </div>
-                                        )}
+                                        ) : null}
                                     </div>
                                     <span style={{ display: 'inline-block', background: brandTheme.navyDeep, color: brandTheme.creamSoft, borderRadius: 999, padding: '5px 10px', fontSize: 12, fontWeight: 700, marginBottom: 10 }}>
                                         {product.category}

@@ -4,83 +4,21 @@ import { brandTheme } from '../theme';
 export type NavLink = {
     label: string;
     href: string;
-    items?: NavLink[];
 };
 
 
 export const mainNavLinks: NavLink[] = [
     { label: 'Inicio', href: '/' },
-    {
-        label: 'Perro',
-        href: '/productos#perro',
-        items: [
-            { label: 'Alimento Seco', href: '/productos#perro' },
-            { label: 'Alimento Humedo', href: '/productos#perro' },
-            { label: 'Accesorios', href: '/productos#perro' },
-            { label: 'Premios', href: '/productos#perro' },
-            { label: 'Salud y Bienestar', href: '/productos#perro' },
-        ],
-    },
-    {
-        label: 'Gato',
-        href: '/productos#gato',
-        items: [
-            { label: 'Arena', href: '/productos#gato' },
-            { label: 'Alimento Seco', href: '/productos#gato' },
-            { label: 'Alimento Humedo', href: '/productos#gato' },
-            { label: 'Rascadores', href: '/productos#gato' },
-            { label: 'Salud y Bienestar', href: '/productos#gato' },
-        ],
-    },
-    {
-        label: 'Peces',
-        href: '/productos#peces',
-        items: [
-            { label: 'Acuarios', href: '/productos#peces' },
-            { label: 'Decoracion', href: '/productos#peces' },
-            { label: 'Filtros', href: '/productos#peces' },
-            { label: 'Alimentos', href: '/productos#peces' },
-        ],
-    },
-    {
-        label: 'Aves',
-        href: '/productos#aves',
-        items: [
-            { label: 'Jaulas', href: '/productos#aves' },
-            { label: 'Alimentos', href: '/productos#aves' },
-            { label: 'Juguetes', href: '/productos#aves' },
-            { label: 'Higiene', href: '/productos#aves' },
-        ],
-    },
-    {
-        label: 'Pequeñas Especies',
-        href: '/productos#pequenas-especies',
-        items: [
-            { label: 'Roedores', href: '/productos#pequenas-especies' },
-            { label: 'Reptiles', href: '/productos#pequenas-especies' },
-        ],
-    },
+    { label: 'Perro', href: '/categorias/perros' },
+    { label: 'Gato', href: '/categorias/gatos' },
+    { label: 'Peces', href: '/categorias/peces' },
+    { label: 'Aves', href: '/categorias/aves' },
+    { label: 'Pequeñas Especies', href: '/categorias/roedores' },
     { label: 'Adopciones', href: '/adopciones' },
    
 ];
 export default function SiteHeader() {
-    const [openMenu, setOpenMenu] = React.useState<string | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const navRef = React.useRef<HTMLElement | null>(null);
-
-    React.useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (navRef.current && !navRef.current.contains(event.target as Node)) {
-                setOpenMenu(null);
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside);
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
 
     const actionButtonStyle: React.CSSProperties = {
         display: 'inline-flex',
@@ -189,7 +127,6 @@ export default function SiteHeader() {
                     <div style={{ borderTop: `1px solid rgba(239, 232, 216, 0.18)`, paddingTop: 12, display: 'grid', gap: 10 }}>
                         <nav
                             aria-label="Secciones principales"
-                            ref={navRef}
                             style={{
                                 display: 'flex',
                                 gap: 10,
@@ -200,77 +137,24 @@ export default function SiteHeader() {
                             }}
                         >
                             {mainNavLinks.map((link) => (
-                                <div
+                                <a
                                     key={link.label}
-                                    style={{ position: 'relative' }}
+                                    href={link.href}
+                                    style={{
+                                        color: brandTheme.creamSoft,
+                                        textDecoration: 'none',
+                                        padding: '9px 12px',
+                                        borderRadius: 999,
+                                        fontSize: 14,
+                                        fontWeight: 700,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 6,
+                                        whiteSpace: 'nowrap',
+                                    }}
                                 >
-                                    <a
-                                        href={link.href}
-                                        onClick={(event) => {
-                                            if (!link.items) {
-                                                setOpenMenu(null);
-                                                return;
-                                            }
-
-                                            event.preventDefault();
-                                            setOpenMenu((current) => (current === link.label ? null : link.label));
-                                        }}
-                                        style={{
-                                            color: brandTheme.creamSoft,
-                                            textDecoration: 'none',
-                                            padding: '9px 12px',
-                                            borderRadius: 999,
-                                            fontSize: 14,
-                                            fontWeight: 700,
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: 6,
-                                            whiteSpace: 'nowrap',
-                                        }}
-                                    >
-                                        <span>{link.label}</span>
-                                        {link.items ? (
-                                            <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                                <path d="m5 7 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                        ) : null}
-                                    </a>
-
-                                    {link.items && openMenu === link.label ? (
-                                        <div
-                                            style={{
-                                                position: 'absolute',
-                                                top: 'calc(100% + 8px)',
-                                                left: 0,
-                                                minWidth: 186,
-                                                background: '#fff',
-                                                borderRadius: 10,
-                                                boxShadow: '0 16px 34px rgba(12, 40, 62, 0.18)',
-                                                border: '1px solid rgba(12, 40, 62, 0.08)',
-                                                padding: '8px 0',
-                                                zIndex: 20,
-                                            }}
-                                        >
-                                            {link.items.map((item) => (
-                                                <a
-                                                    key={item.label}
-                                                    href={item.href}
-                                                    style={{
-                                                        display: 'block',
-                                                        padding: '10px 22px',
-                                                        color: brandTheme.orange,
-                                                        textDecoration: 'none',
-                                                        fontSize: 15,
-                                                        fontWeight: 500,
-                                                        background: '#fff',
-                                                    }}
-                                                >
-                                                    {item.label}
-                                                </a>
-                                            ))}
-                                        </div>
-                                    ) : null}
-                                </div>
+                                    <span>{link.label}</span>
+                                </a>
                             ))}
                         </nav>
 
