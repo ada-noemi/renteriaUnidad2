@@ -49,10 +49,130 @@ const INITIAL_MESSAGES: Message[] = [
 
 const ALL_TAGS: Tag[] = ['Compra', 'Consejo', 'Ayuda', 'Soporte'];
 
+// Duración de la animación de salida al eliminar un mensaje (debe coincidir con el keyframe "card-exit").
+const DELETE_ANIMATION_MS = 220;
+
+// Estilos de animación inyectados una sola vez (keyframes globales).
+function AnimationStyles() {
+    return (
+        <style>{`
+            @keyframes header-enter {
+                from { opacity: 0; transform: translateY(-8px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes chip-enter {
+                from { opacity: 0; transform: translateY(6px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes badge-pop {
+                0% { opacity: 0; transform: scale(0.5); }
+                70% { transform: scale(1.08); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+            @keyframes card-enter {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes card-exit {
+                from { opacity: 1; transform: scale(1); max-height: 300px; margin-bottom: 0; }
+                to { opacity: 0; transform: scale(0.96); max-height: 0; margin-bottom: -12px; }
+            }
+            @keyframes text-expand {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes dot-pulse {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.45); }
+                50% { box-shadow: 0 0 0 4px rgba(230, 126, 34, 0); }
+            }
+            @keyframes sidebar-enter {
+                from { opacity: 0; transform: translateY(12px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .mb-header {
+                animation: header-enter 0.4s ease both;
+            }
+            .mb-badge {
+                animation: badge-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+                display: inline-block;
+            }
+            .mb-chip {
+                animation: chip-enter 0.3s ease both;
+            }
+            .mb-chip:hover {
+                filter: brightness(0.98);
+            }
+            .mb-card {
+                animation: card-enter 0.35s ease both;
+                overflow: hidden;
+                transition: box-shadow 0.2s ease, transform 0.2s ease;
+            }
+            .mb-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(12, 40, 62, 0.1);
+            }
+            .mb-card.exiting {
+                animation: card-exit ${DELETE_ANIMATION_MS}ms ease forwards;
+                pointer-events: none;
+            }
+            .mb-text-expanded {
+                animation: text-expand 0.25s ease both;
+            }
+            .mb-unread-dot {
+                animation: dot-pulse 1.8s ease-in-out infinite;
+                border-radius: 50%;
+            }
+            .mb-action-btn {
+                transition: transform 0.12s ease, background 0.15s ease, filter 0.15s ease;
+            }
+            .mb-action-btn:hover {
+                transform: translateY(-1px);
+                filter: brightness(0.97);
+            }
+            .mb-action-btn:active {
+                transform: translateY(0);
+            }
+            .mb-primary-btn {
+                transition: transform 0.15s ease, box-shadow 0.2s ease;
+            }
+            .mb-primary-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(230, 126, 34, 0.3);
+            }
+            .mb-sidebar {
+                animation: sidebar-enter 0.4s ease both;
+                animation-delay: 0.15s;
+            }
+            .mb-quicklink {
+                transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+            }
+            .mb-quicklink:hover {
+                transform: translateX(3px);
+                border-color: ${brandTheme.orange};
+                background: #fff8f0;
+            }
+            .mb-empty {
+                animation: text-expand 0.3s ease both;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .mb-header, .mb-badge, .mb-chip, .mb-card, .mb-text-expanded,
+                .mb-unread-dot, .mb-action-btn, .mb-primary-btn, .mb-sidebar,
+                .mb-quicklink, .mb-empty, .mb-card.exiting {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
+        `}</style>
+    );
+}
+
 export default function MailboxView() {
     const [messages, setMessages] = React.useState<Message[]>(INITIAL_MESSAGES);
     const [activeTag, setActiveTag] = React.useState<Tag | null>(null);
     const [expandedId, setExpandedId] = React.useState<number | null>(null);
+    const [exitingIds, setExitingIds] = React.useState<Set<number>>(new Set());
 
     const unreadCount = messages.filter((m) => !m.read).length;
 
@@ -66,9 +186,18 @@ export default function MailboxView() {
         setMessages((prev) => prev.map((m) => ({ ...m, read: true })));
     }
 
+    // Primero reproducimos la animación de salida y, cuando termina, quitamos el mensaje del estado.
     function deleteMessage(id: number) {
-        setMessages((prev) => prev.filter((m) => m.id !== id));
-        if (expandedId === id) setExpandedId(null);
+        setExitingIds((prev) => new Set(prev).add(id));
+        window.setTimeout(() => {
+            setMessages((prev) => prev.filter((m) => m.id !== id));
+            setExitingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+            if (expandedId === id) setExpandedId(null);
+        }, DELETE_ANIMATION_MS);
     }
 
     function toggleExpand(id: number) {
@@ -78,11 +207,12 @@ export default function MailboxView() {
 
     return (
         <PageLayout>
+            <AnimationStyles />
             <main style={{ maxWidth: 1100, margin: '0 auto', padding: '34px 16px 56px' }}>
                 <section style={{ display: 'grid', gap: 22 }}>
 
                     {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div className="mb-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                         <div>
                             <span style={{ color: brandTheme.orange, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                                 Buzón
@@ -92,7 +222,7 @@ export default function MailboxView() {
                                     Mensajes de tu cuenta
                                 </h1>
                                 {unreadCount > 0 && (
-                                    <span style={{
+                                    <span className="mb-badge" style={{
                                         background: brandTheme.orange, color: '#fff',
                                         borderRadius: 999, fontSize: 12, fontWeight: 700,
                                         padding: '3px 10px', marginBottom: 4,
@@ -109,6 +239,7 @@ export default function MailboxView() {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={markAllRead}
+                                    className="mb-action-btn"
                                     style={{
                                         background: 'transparent',
                                         border: `1px solid ${brandTheme.border}`,
@@ -122,10 +253,11 @@ export default function MailboxView() {
                             )}
                             <a
                                 href="/chat"
+                                className="mb-primary-btn"
                                 style={{
                                     textDecoration: 'none', background: brandTheme.orange,
                                     color: '#fff', borderRadius: 10, padding: '10px 16px',
-                                    fontWeight: 700, fontSize: 14,
+                                    fontWeight: 700, fontSize: 14, display: 'inline-block',
                                 }}
                             >
                                 Abrir chat
@@ -137,6 +269,7 @@ export default function MailboxView() {
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button
                             onClick={() => setActiveTag(null)}
+                            className="mb-chip"
                             style={{
                                 fontSize: 13, padding: '5px 14px',
                                 borderRadius: 999, cursor: 'pointer',
@@ -149,13 +282,14 @@ export default function MailboxView() {
                         >
                             Todos ({messages.length})
                         </button>
-                        {ALL_TAGS.filter((t) => messages.some((m) => m.tag === t)).map((tag) => {
+                        {ALL_TAGS.filter((t) => messages.some((m) => m.tag === t)).map((tag, chipIndex) => {
                             const s = TAG_STYLES[tag];
                             const active = activeTag === tag;
                             return (
                                 <button
                                     key={tag}
                                     onClick={() => setActiveTag(active ? null : tag)}
+                                    className="mb-chip"
                                     style={{
                                         fontSize: 13, padding: '5px 14px',
                                         borderRadius: 999, cursor: 'pointer',
@@ -164,6 +298,7 @@ export default function MailboxView() {
                                         color: active ? s.color : brandTheme.navy,
                                         fontWeight: 600,
                                         transition: 'all 0.15s',
+                                        animationDelay: `${0.05 + chipIndex * 0.04}s`,
                                     }}
                                 >
                                     {tag}
@@ -178,23 +313,24 @@ export default function MailboxView() {
                         {/* Messages list */}
                         <section style={{ display: 'grid', gap: 12 }}>
                             {filtered.length === 0 && (
-                                <p style={{ color: brandTheme.muted, fontSize: 14, padding: '24px 0' }}>
+                                <p className="mb-empty" style={{ color: brandTheme.muted, fontSize: 14, padding: '24px 0' }}>
                                     No hay mensajes en esta categoría.
                                 </p>
                             )}
-                            {filtered.map((msg) => {
+                            {filtered.map((msg, msgIndex) => {
                                 const tag = TAG_STYLES[msg.tag];
                                 const expanded = expandedId === msg.id;
+                                const exiting = exitingIds.has(msg.id);
                                 return (
                                     <article
                                         key={msg.id}
+                                        className={`mb-card${exiting ? ' exiting' : ''}`}
                                         style={{
                                             background: msg.read ? '#fff' : brandTheme.creamSoft,
                                             border: `1px solid ${msg.read ? brandTheme.border : brandTheme.navy + '33'}`,
                                             borderRadius: 10,
-                                            overflow: 'hidden',
                                             boxShadow: msg.read ? 'none' : '0 4px 14px rgba(12,40,62,0.08)',
-                                            transition: 'box-shadow 0.2s',
+                                            animationDelay: exiting ? '0s' : `${msgIndex * 0.06}s`,
                                         }}
                                     >
                                         {/* Unread indicator bar */}
@@ -207,28 +343,36 @@ export default function MailboxView() {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                                                     {!msg.read && (
-                                                        <span style={{
-                                                            width: 8, height: 8, borderRadius: '50%',
+                                                        <span className="mb-unread-dot" style={{
+                                                            width: 8, height: 8,
                                                             background: brandTheme.orange, flexShrink: 0,
                                                             display: 'inline-block',
                                                         }} />
                                                     )}
-                                                    <strong style={{ color: brandTheme.navy, fontSize: 16 }}>{msg.title}</strong>
+                                                    <strong
+                                                        onClick={() => toggleExpand(msg.id)}
+                                                        style={{ color: brandTheme.navy, fontSize: 16, cursor: 'pointer' }}
+                                                    >
+                                                        {msg.title}
+                                                    </strong>
                                                 </div>
                                                 <span style={{ color: brandTheme.muted, fontSize: 12, whiteSpace: 'nowrap' }}>{msg.time}</span>
                                             </div>
 
                                             {/* Row 2: preview / expanded text */}
-                                            <p style={{
-                                                margin: '0 0 12px',
-                                                color: brandTheme.text,
-                                                lineHeight: 1.65,
-                                                fontSize: 14,
-                                                display: expanded ? 'block' : '-webkit-box',
-                                                WebkitLineClamp: expanded ? undefined : 2,
-                                                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                                                overflow: expanded ? 'visible' : 'hidden',
-                                            }}>
+                                            <p
+                                                className={expanded ? 'mb-text-expanded' : undefined}
+                                                style={{
+                                                    margin: '0 0 12px',
+                                                    color: brandTheme.text,
+                                                    lineHeight: 1.65,
+                                                    fontSize: 14,
+                                                    display: expanded ? 'block' : '-webkit-box',
+                                                    WebkitLineClamp: expanded ? undefined : 2,
+                                                    WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                                                    overflow: expanded ? 'visible' : 'hidden',
+                                                }}
+                                            >
                                                 {msg.text}
                                             </p>
 
@@ -243,11 +387,12 @@ export default function MailboxView() {
                                                 </span>
 
                                                 <div style={{ display: 'flex', gap: 6 }}>
-                                                   
+
                                                     {!msg.read && (
                                                         <button
                                                             onClick={() => markRead(msg.id)}
                                                             title="Marcar como leído"
+                                                            className="mb-action-btn"
                                                             style={{
                                                                 fontSize: 12, padding: '4px 10px',
                                                                 border: `1px solid ${brandTheme.border}`,
@@ -261,6 +406,7 @@ export default function MailboxView() {
                                                     <button
                                                         onClick={() => deleteMessage(msg.id)}
                                                         title="Eliminar mensaje"
+                                                        className="mb-action-btn"
                                                         style={{
                                                             fontSize: 12, padding: '4px 8px',
                                                             border: `1px solid ${brandTheme.border}`,
@@ -279,8 +425,8 @@ export default function MailboxView() {
                         </section>
 
                         {/* Sidebar */}
-                        <aside style={{ display: 'grid', gap: 14 }}>
-                            
+                        <aside className="mb-sidebar" style={{ display: 'grid', gap: 14 }}>
+
                             {/* Quick links */}
                             <div style={{
                                 background: brandTheme.creamSoft,
@@ -297,6 +443,7 @@ export default function MailboxView() {
                                         <a
                                             key={href}
                                             href={href}
+                                            className="mb-quicklink"
                                             style={{
                                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                                 textDecoration: 'none', color: brandTheme.navy,

@@ -74,6 +74,97 @@ function loadHistory(): ChatMessage[] {
 
 const QUICK_ACTIONS = ['Ver productos', 'Rastrear pedido', 'Métodos de pago', 'Hablar con soporte'];
 
+// Animaciones: header con fade-in, contenedor del chat entrando con pop,
+// mensajes apareciendo con fade + slide (según sea del bot o del usuario),
+// punto "En línea" con pulso, botón enviar con pop al activarse,
+// acciones rápidas y botón limpiar con hover suave
+const animationStyles = `
+@keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-5px); opacity: 1; }
+}
+
+@keyframes chatHeaderFadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes chatContainerPopIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes messageInLeft {
+    from { opacity: 0; transform: translateY(6px) translateX(-6px); }
+    to { opacity: 1; transform: translateY(0) translateX(0); }
+}
+
+@keyframes messageInRight {
+    from { opacity: 0; transform: translateY(6px) translateX(6px); }
+    to { opacity: 1; transform: translateY(0) translateX(0); }
+}
+
+@keyframes onlinePulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45); }
+    70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+@keyframes sendBtnPop {
+    0% { transform: scale(0.85); }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+.chat-header-animated {
+    animation: chatHeaderFadeIn 0.4s ease-out both;
+}
+
+.chat-container-animated {
+    animation: chatContainerPopIn 0.4s ease-out both;
+}
+
+.chat-online-dot-animated {
+    animation: onlinePulse 2s ease-out infinite;
+}
+
+.chat-message-bot-animated {
+    animation: messageInLeft 0.25s ease-out both;
+}
+
+.chat-message-user-animated {
+    animation: messageInRight 0.25s ease-out both;
+}
+
+.chat-clear-btn-animated {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.chat-clear-btn-animated:hover {
+    background-color: rgba(18, 58, 87, 0.08);
+    color: ${brandTheme.navy};
+}
+
+.chat-quick-action-animated {
+    transition: transform 0.15s ease;
+}
+.chat-quick-action-animated:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.chat-send-btn-animated {
+    transition: transform 0.15s ease;
+}
+.chat-send-btn-animated.active {
+    animation: sendBtnPop 0.25s ease-out;
+}
+.chat-send-btn-animated:hover:not(:disabled) {
+    transform: scale(1.08);
+}
+.chat-send-btn-animated:active:not(:disabled) {
+    transform: scale(0.94);
+}
+`;
+
 export default function ChatBotView() {
     const [input, setInput] = React.useState('');
     const [messages, setMessages] = React.useState<ChatMessage[]>(loadHistory);
@@ -129,11 +220,13 @@ export default function ChatBotView() {
         inputRef.current?.focus();
     }
 
+    const canSend = Boolean(input.trim()) && !isTyping;
+
     return (
         <PageLayout>
             <main style={{ maxWidth: 700, margin: '0 auto', padding: '34px 16px 56px' }}>
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div className="chat-header-animated" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
                     <div>
                         <span style={{ color: brandTheme.orange, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Soporte
@@ -146,16 +239,16 @@ export default function ChatBotView() {
                         </p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                        <span style={{
+                        <span className="chat-online-dot-animated" style={{
                             display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-                            background: '#22c55e', boxShadow: '0 0 0 2px rgba(34,197,94,0.25)',
+                            background: '#22c55e',
                         }} />
                         <span style={{ fontSize: 13, color: brandTheme.muted }}>En línea</span>
                     </div>
                 </div>
 
                 {/* Chat container */}
-                <div style={{
+                <div className="chat-container-animated" style={{
                     background: '#fff',
                     border: `1px solid ${brandTheme.border}`,
                     borderRadius: 14,
@@ -180,6 +273,7 @@ export default function ChatBotView() {
                         <button
                             onClick={clearHistory}
                             title="Limpiar conversación"
+                            className="chat-clear-btn-animated"
                             style={{
                                 background: 'none', border: 'none', cursor: 'pointer',
                                 fontSize: 12, color: brandTheme.muted, padding: '4px 8px',
@@ -206,6 +300,7 @@ export default function ChatBotView() {
                         {messages.map((msg, index) => (
                             <div
                                 key={index}
+                                className={msg.from === 'bot' ? 'chat-message-bot-animated' : 'chat-message-user-animated'}
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -234,7 +329,7 @@ export default function ChatBotView() {
 
                         {/* Typing indicator */}
                         {isTyping && (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3 }}>
+                            <div className="chat-message-bot-animated" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3 }}>
                                 <span style={{ fontSize: 11, color: brandTheme.muted, paddingLeft: 2 }}>Asistente</span>
                                 <div style={{
                                     background: brandTheme.creamSoft,
@@ -277,6 +372,7 @@ export default function ChatBotView() {
                                 key={action}
                                 onClick={() => sendMessage(action)}
                                 disabled={isTyping}
+                                className="chat-quick-action-animated"
                                 style={{
                                     fontSize: 12, padding: '5px 10px',
                                     border: `1px solid ${brandTheme.border}`,
@@ -329,15 +425,16 @@ export default function ChatBotView() {
                         />
                         <button
                             type="submit"
-                            disabled={!input.trim() || isTyping}
+                            disabled={!canSend}
+                            className={`chat-send-btn-animated${canSend ? ' active' : ''}`}
                             style={{
                                 border: 'none',
                                 borderRadius: '50%',
                                 width: 40, height: 40,
                                 flexShrink: 0,
-                                background: input.trim() && !isTyping ? brandTheme.navy : brandTheme.border,
+                                background: canSend ? brandTheme.navy : brandTheme.border,
                                 color: '#fff',
-                                cursor: input.trim() && !isTyping ? 'pointer' : 'default',
+                                cursor: canSend ? 'pointer' : 'default',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -352,13 +449,7 @@ export default function ChatBotView() {
                     </form>
                 </div>
 
-                {/* Bounce keyframes */}
-                <style>{`
-                    @keyframes bounce {
-                        0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-                        30% { transform: translateY(-5px); opacity: 1; }
-                    }
-                `}</style>
+                <style>{animationStyles}</style>
             </main>
         </PageLayout>
     );

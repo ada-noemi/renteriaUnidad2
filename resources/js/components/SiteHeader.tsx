@@ -17,6 +17,56 @@ export const mainNavLinks: NavLink[] = [
     { label: 'Adopciones', href: '/adopciones' },
 ];
 
+// Animaciones: entrada del header, hover en links/botones/logo, foco en la búsqueda
+const animationStyles = `
+@keyframes headerFadeDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.site-header-animated {
+    animation: headerFadeDown 0.6s ease-out;
+}
+
+.logo-link-animated {
+    transition: transform 0.25s ease;
+}
+.logo-link-animated:hover {
+    transform: scale(1.04);
+}
+
+.nav-link-animated {
+    transition: background-color 0.25s ease, transform 0.25s ease;
+}
+.nav-link-animated:hover {
+    background-color: rgba(239, 232, 216, 0.14);
+    transform: translateY(-2px);
+}
+
+.action-btn-animated {
+    transition: background-color 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.action-btn-animated:hover {
+    background-color: rgba(239, 232, 216, 0.24);
+    border-color: rgba(239, 232, 216, 0.5);
+    transform: translateY(-2px) scale(1.06);
+}
+
+.search-form-animated {
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+.search-form-animated:focus-within {
+    background-color: rgba(239, 232, 216, 0.2);
+    border-color: rgba(239, 232, 216, 0.5);
+}
+`;
+
 export default function SiteHeader() {
     const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -48,12 +98,17 @@ export default function SiteHeader() {
 
     return (
         <>
+            <style>{animationStyles}</style>
+
             <div style={{ height: 8, background: brandTheme.navy }} />
 
-            <header style={{ background: brandTheme.navy, color: brandTheme.creamSoft, borderBottom: `1px solid rgba(239, 232, 216, 0.2)`, boxShadow: '0 8px 24px rgba(12, 40, 62, 0.12)' }}>
+            <header
+                className="site-header-animated"
+                style={{ background: brandTheme.navy, color: brandTheme.creamSoft, borderBottom: `1px solid rgba(239, 232, 216, 0.2)`, boxShadow: '0 8px 24px rgba(12, 40, 62, 0.12)' }}
+            >
                 <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px 16px 14px', display: 'grid', gap: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-                        <a href="/" aria-label="PetWord inicio" style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, color: 'inherit', textDecoration: 'none' }}>
+                        <a href="/" aria-label="PetWord inicio" className="logo-link-animated" style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, color: 'inherit', textDecoration: 'none' }}>
                             <img
                                 src="/images/pertword.png"
                                 alt="PetWord"
@@ -75,7 +130,7 @@ export default function SiteHeader() {
                         </a>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                            <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center', background: 'rgba(239, 232, 216, 0.12)', borderRadius: 999, padding: '10px 14px', width: 'min(100%, 320px)', flex: '1 1 240px', border: `1px solid rgba(239, 232, 216, 0.28)` }}>
+                            <form onSubmit={handleSearchSubmit} className="search-form-animated" style={{ display: 'flex', alignItems: 'center', background: 'rgba(239, 232, 216, 0.12)', borderRadius: 999, padding: '10px 14px', width: 'min(100%, 320px)', flex: '1 1 240px', border: `1px solid rgba(239, 232, 216, 0.28)` }}>
                                 <span style={{ color: brandTheme.creamSoft, marginRight: 8 }}>Búsqueda</span>
                                 <input
                                     type="search"
@@ -87,7 +142,7 @@ export default function SiteHeader() {
                             </form>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', color: brandTheme.creamSoft, fontWeight: 700 }}>
-                                <a href="/registrar" style={actionButtonStyle} aria-label="Registrar" title="Registrar">
+                                <a href="/registrar" className="action-btn-animated" style={actionButtonStyle} aria-label="Registrar" title="Registrar">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M15 20a4 4 0 0 0-8 0" />
                                         <circle cx="11" cy="8" r="4" />
@@ -95,27 +150,27 @@ export default function SiteHeader() {
                                         <path d="M17 11h6" />
                                     </svg>
                                 </a>
-                                <a href="/login" style={actionButtonStyle} aria-label="Inicio de sesión" title="Inicio de sesión">
+                                <a href="/login" className="action-btn-animated" style={actionButtonStyle} aria-label="Inicio de sesión" title="Inicio de sesión">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                                         <path d="M10 17l5-5-5-5" />
                                         <path d="M15 12H3" />
                                     </svg>
                                 </a>
-                                <a href="/buzon" style={actionButtonStyle} aria-label="Buzón" title="Buzón">
+                                <a href="/buzon" className="action-btn-animated" style={actionButtonStyle} aria-label="Buzón" title="Buzón">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M4 4h16v16H4z" />
                                         <path d="m22 6-10 7L2 6" />
                                     </svg>
                                 </a>
-                                <a href="/chat" style={actionButtonStyle} aria-label="Chat" title="Chat">
+                                <a href="/chat" className="action-btn-animated" style={actionButtonStyle} aria-label="Chat" title="Chat">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
                                         <path d="M8 9h8" />
                                         <path d="M8 13h5" />
                                     </svg>
                                 </a>
-                                <a href="/recuperacion" style={actionButtonStyle} aria-label="Recuperar contraseña" title="Recuperar contraseña">
+                                <a href="/recuperacion" className="action-btn-animated" style={actionButtonStyle} aria-label="Recuperar contraseña" title="Recuperar contraseña">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <circle cx="7.5" cy="14.5" r="3.5" />
                                         <path d="M10 12 21 1" />
@@ -123,7 +178,7 @@ export default function SiteHeader() {
                                         <path d="m18 3 3 3" />
                                     </svg>
                                 </a>
-                                <a href="/carrito" style={{ position: 'relative', ...actionButtonStyle }} aria-label="Carrito" title="Carrito estático">
+                                <a href="/carrito" className="action-btn-animated" style={{ position: 'relative', ...actionButtonStyle }} aria-label="Carrito" title="Carrito estático">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <circle cx="9" cy="20" r="1" />
                                         <circle cx="18" cy="20" r="1" />
@@ -151,6 +206,7 @@ export default function SiteHeader() {
                                 <a
                                     key={link.label}
                                     href={link.href}
+                                    className="nav-link-animated"
                                     style={{
                                         color: brandTheme.creamSoft,
                                         textDecoration: 'none',

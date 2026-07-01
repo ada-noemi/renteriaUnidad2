@@ -11,6 +11,53 @@ const formCardStyle: React.CSSProperties = {
     boxShadow: '0 18px 32px rgba(12, 40, 62, 0.1)',
 };
 
+// Animaciones: encabezado con fade-in, tarjetas de producto cayendo desde arriba
+// con rebote (stagger por sección), hover con levante de tarjeta
+const animationStyles = `
+@keyframes headingFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes productCardFallDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-120px);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.products-heading-animated {
+    animation: headingFadeIn 0.5s ease-out both;
+}
+
+.products-section-title-animated {
+    animation: headingFadeIn 0.5s ease-out both;
+}
+
+.product-card-animated {
+    animation: productCardFallDown 0.6s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.product-card-animated:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 30px rgba(12, 40, 62, 0.16);
+}
+`;
+
 export default function ProductsView() {
     const petSections = [
         { slug: 'perro', title: 'Perro', description: 'Productos esenciales para alimentacion, juego y bienestar canino.' },
@@ -22,8 +69,10 @@ export default function ProductsView() {
 
     return (
         <PageLayout>
+            <style>{animationStyles}</style>
+
             <main style={{ maxWidth: 1180, margin: '0 auto', padding: '34px 16px 52px' }}>
-                <section style={{ marginBottom: 24 }}>
+                <section className="products-heading-animated" style={{ marginBottom: 24 }}>
                     <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Catálogo</span>
                     <h1 style={{ margin: '8px 0 12px', color: brandTheme.navy, fontSize: 'clamp(28px, 5vw, 40px)' }}>Productos por tipo de mascota</h1>
                     <p style={{ margin: 0, color: brandTheme.muted, lineHeight: 1.7, maxWidth: 720 }}>
@@ -37,14 +86,18 @@ export default function ProductsView() {
 
                         return (
                             <section key={section.slug} id={section.slug} style={{ display: 'grid', gap: 14, scrollMarginTop: 120 }}>
-                                <div>
+                                <div className="products-section-title-animated">
                                     <h2 style={{ margin: 0, color: brandTheme.navy }}>{section.title}</h2>
                                     <p style={{ margin: '6px 0 0', color: brandTheme.muted }}>{section.description}</p>
                                 </div>
 
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-                                    {sectionProducts.map((product) => (
-                                        <article key={product.id} style={formCardStyle}>
+                                    {sectionProducts.map((product, index) => (
+                                        <article
+                                            key={product.id}
+                                            className="product-card-animated"
+                                            style={{ ...formCardStyle, animationDelay: `${index * 0.07}s` }}
+                                        >
                                             <span style={{ display: 'inline-block', background: brandTheme.navyDeep, color: brandTheme.creamSoft, borderRadius: 999, padding: '5px 10px', fontSize: 12, fontWeight: 700, marginBottom: 10 }}>
                                                 {product.category}
                                             </span>

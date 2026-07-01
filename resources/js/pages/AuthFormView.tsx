@@ -43,6 +43,85 @@ const inputStyle: React.CSSProperties = {
     boxSizing: 'border-box',
 };
 
+// Animaciones: fondo con fade-in, panel del modal entrando con "pop" (escala + fade),
+// botón cerrar con rotación al hover, inputs con resplandor al enfocar,
+// botón de envío con levante/hover y mensaje de éxito con fade-in
+const animationStyles = `
+@keyframes backdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalPopIn {
+    0% {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes messageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-backdrop-animated {
+    animation: backdropFadeIn 0.25s ease-out both;
+}
+
+.auth-modal-animated {
+    animation: modalPopIn 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.auth-close-btn-animated {
+    transition: transform 0.25s ease, background-color 0.25s ease;
+}
+.auth-close-btn-animated:hover {
+    transform: rotate(90deg);
+    background-color: rgba(18, 58, 87, 0.12);
+}
+
+.auth-input-animated {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.auth-input-animated:focus {
+    outline: none;
+    border-color: ${brandTheme.orange};
+    box-shadow: 0 0 0 3px rgba(199, 100, 42, 0.15);
+}
+
+.auth-submit-btn-animated {
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+.auth-submit-btn-animated:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+}
+.auth-submit-btn-animated:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.auth-message-animated {
+    animation: messageFadeIn 0.3s ease-out both;
+}
+
+.auth-footer-link-animated {
+    transition: opacity 0.2s ease;
+}
+.auth-footer-link-animated:hover {
+    opacity: 0.75;
+}
+`;
+
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
@@ -200,6 +279,8 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
 
     return (
         <PageLayout>
+            <style>{animationStyles}</style>
+
             <main style={{ minHeight: 'calc(100vh - 164px)', position: 'relative', overflow: 'hidden' }}>
                 <div
                     style={{
@@ -211,6 +292,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
 
                 <div
                     onClick={closeModal}
+                    className="auth-backdrop-animated"
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -226,6 +308,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                 >
                     <section
                         onClick={(event) => event.stopPropagation()}
+                        className="auth-modal-animated"
                         style={{
                             width: 'min(100%, 500px)',
                             position: 'relative',
@@ -246,6 +329,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                 event.preventDefault();
                                 closeModal();
                             }}
+                            className="auth-close-btn-animated"
                             style={{
                                 position: 'absolute',
                                 top: 16,
@@ -284,6 +368,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                         type="text"
                                         value={form.name}
                                         onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                                        className="auth-input-animated"
                                         style={inputStyle}
                                         placeholder="Ej. Andrea Ramírez"
                                     />
@@ -297,6 +382,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                     type="email"
                                     value={form.email}
                                     onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                                    className="auth-input-animated"
                                     style={inputStyle}
                                     placeholder="correo@ejemplo.com"
                                 />
@@ -309,6 +395,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                     type="password"
                                     value={form.password}
                                     onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                                    className="auth-input-animated"
                                     style={inputStyle}
                                     placeholder="Mínimo 8 caracteres"
                                 />
@@ -322,6 +409,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                         type="password"
                                         value={form.passwordConfirmation}
                                         onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
+                                        className="auth-input-animated"
                                         style={inputStyle}
                                         placeholder="Repite tu contraseña"
                                     />
@@ -332,7 +420,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                             {fieldError('recaptcha') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('recaptcha')}</span> : null}
 
                             {message ? (
-                                <div style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
+                                <div className="auth-message-animated" style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
                                     {message}
                                 </div>
                             ) : null}
@@ -340,6 +428,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                             <button
                                 type="submit"
                                 disabled={loading}
+                                className="auth-submit-btn-animated"
                                 style={{
                                     border: 'none',
                                     borderRadius: 14,
@@ -358,18 +447,18 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                         <div style={{ marginTop: 18, color: brandTheme.muted, lineHeight: 1.7 }}>
                             {isRegister ? (
                                 <span>
-                                    ¿Ya tienes cuenta? <a href="/login" style={{ color: brandTheme.orange, fontWeight: 700 }}>Inicia sesión</a>
+                                    ¿Ya tienes cuenta? <a href="/login" className="auth-footer-link-animated" style={{ color: brandTheme.orange, fontWeight: 700 }}>Inicia sesión</a>
                                 </span>
                             ) : (
                                 <span>
-                                    ¿Aún no tienes cuenta? <a href="/registrar" style={{ color: brandTheme.orange, fontWeight: 700 }}>Regístrate</a>
+                                    ¿Aún no tienes cuenta? <a href="/registrar" className="auth-footer-link-animated" style={{ color: brandTheme.orange, fontWeight: 700 }}>Regístrate</a>
                                 </span>
                             )}
                         </div>
 
                         {!isRegister ? (
                             <div style={{ marginTop: 8 }}>
-                                <a href="/recuperacion" style={{ color: brandTheme.orange, fontWeight: 700 }}>Olvidé mi contraseña</a>
+                                <a href="/recuperacion" className="auth-footer-link-animated" style={{ color: brandTheme.orange, fontWeight: 700 }}>Olvidé mi contraseña</a>
                             </div>
                         ) : null}
 
@@ -380,6 +469,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                     event.preventDefault();
                                     closeModal();
                                 }}
+                                className="auth-footer-link-animated"
                                 style={{ color: brandTheme.muted, textDecoration: 'none', fontSize: 14 }}
                             >
                                 Volver al inicio
