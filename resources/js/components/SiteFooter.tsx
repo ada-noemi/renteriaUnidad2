@@ -8,14 +8,14 @@ type FooterLink = {
 
 const primaryLinks: FooterLink[] = [
     { label: 'Inicio', href: '/' },
-    { label: 'Categorias', href: '/categorias' },
+    { label: 'Categorías', href: '/categorias' },
     { label: 'Productos', href: '/productos' },
 ];
 
 const supportLinks: FooterLink[] = [
     { label: 'Ayuda', href: '/ayuda' },
-    { label: 'Contactanos', href: '/contacto' },
-    { label: 'Recuperacion de contraseña', href: '/recuperacion' },
+    { label: 'Contáctanos', href: '/contacto' },
+    { label: 'Recuperación de contraseña', href: '/recuperacion' },
     { label: 'Chat', href: '/chat' },
     { label: 'Mapa del sitio', href: '/mapa-del-sitio' },
 ];
@@ -34,7 +34,7 @@ export default function SiteFooter({ categories }: SiteFooterProps) {
         <footer style={{ background: brandTheme.navyDeep, color: brandTheme.cream }}>
             <div style={{ maxWidth: 1180, margin: '0 auto', padding: '28px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
                 <section>
-                    <h3 style={{ marginTop: 0, color: brandTheme.creamSoft }}>Secciones principales</h3>
+                    <h3 style={{ marginTop: 0, color: brandTheme.creamSoft }}>Secciónes principales</h3>
                     <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.9 }}>
                         {primaryLinks.map((link) => (
                             <li key={link.href}>
@@ -45,7 +45,7 @@ export default function SiteFooter({ categories }: SiteFooterProps) {
                 </section>
 
                 <section>
-                    <h3 style={{ marginTop: 0, color: brandTheme.creamSoft }}>Categorias</h3>
+                    <h3 style={{ marginTop: 0, color: brandTheme.creamSoft }}>Categorías</h3>
                     <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.9 }}>
                         {categories.map((category) => (
                             <li key={category.id}>

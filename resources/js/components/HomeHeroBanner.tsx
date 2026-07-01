@@ -17,7 +17,7 @@ const slides: Slide[] = [
     },
     {
         id: 2,
-        title: 'Mas vendidos por categoria en una sola vista',
+        title: 'Más vendidos por categoría en una sola vista',
         description: 'Encuentra rápido lo que más compran otros usuarios por tipo de mascota.',
         image: '/images/banner2.png',
     },

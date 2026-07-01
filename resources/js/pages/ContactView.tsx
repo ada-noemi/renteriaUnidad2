@@ -18,7 +18,7 @@ export default function ContactView() {
         }
 
         if (!email.includes('@')) {
-            nextErrors.email = 'Ingresa un correo valido.';
+            nextErrors.email = 'Ingresa un correo válido.';
         }
 
         if (message.trim().length < 10) {
@@ -54,10 +54,10 @@ export default function ContactView() {
             <main style={{ maxWidth: 1040, margin: '0 auto', padding: '34px 16px 56px' }}>
                 <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 20, alignItems: 'start' }}>
                     <div>
-                        <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Contactanos</span>
+                        <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Contáctanos</span>
                         <h1 style={{ margin: '8px 0 10px', color: brandTheme.navy, fontSize: 'clamp(28px, 5vw, 42px)' }}>Soporte PetWord</h1>
                         <p style={{ margin: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
-                            Envia tus dudas sobre acceso, productos, categorias o busqueda del sitio.
+                            Envía tus dudas sobre acceso, productos, categorías o búsqueda del sitio.
                         </p>
 
                         <div style={{ marginTop: 18, background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 18, display: 'grid', gap: 8 }}>
@@ -94,7 +94,7 @@ export default function ContactView() {
                         ) : null}
 
                         <button type="submit" style={{ border: 'none', borderRadius: 12, padding: '14px 18px', background: brandTheme.orange, color: '#fff', fontSize: 15, fontWeight: 700 }}>
-                            Enviar mensaje
+                            Envíar mensaje
                         </button>
                     </form>
                 </section>

@@ -24,10 +24,10 @@ export default function ProductsView() {
         <PageLayout>
             <main style={{ maxWidth: 1180, margin: '0 auto', padding: '34px 16px 52px' }}>
                 <section style={{ marginBottom: 24 }}>
-                    <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Catalogo</span>
+                    <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Catálogo</span>
                     <h1 style={{ margin: '8px 0 12px', color: brandTheme.navy, fontSize: 'clamp(28px, 5vw, 40px)' }}>Productos por tipo de mascota</h1>
                     <p style={{ margin: 0, color: brandTheme.muted, lineHeight: 1.7, maxWidth: 720 }}>
-                        Cada seccion agrupa los productos segun el tipo de mascota del menu principal para que la navegacion y la busqueda lleven al usuario a un bloque concreto.
+                        Cada sección agrupa los productos segun el tipo de mascota del menu principal para que la navegación y la búsqueda lleven al usuario a un bloque concreto.
                     </p>
                 </section>
 

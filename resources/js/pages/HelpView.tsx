@@ -4,21 +4,54 @@ import { brandTheme } from '../theme';
 
 const faqs = [
     {
-        question: 'Como recupero mi contrasena?',
-        answer: 'Entra a Recuperacion, escribe el correo de tu cuenta y registra una nueva contrasena.',
+        question: '¿Cómo recupero mi contraseña?',
+        answer: 'Entra a Recuperación, escribe el correo de tu cuenta y registra una nueva contraseña.',
     },
     {
-        question: 'Por que no puedo ver productos o chat?',
-        answer: 'Algunas secciones son privadas. Primero registra tu cuenta o inicia sesion.',
+        question: '¿Por qué no puedo ver productos o chat?',
+        answer: 'Algunas secciones son privadas. Primero registra tu cuenta o inicia sesión.',
     },
     {
-        question: 'Como busco productos?',
-        answer: 'Usa la barra de busqueda del encabezado. Si inicias sesion tambien se incluyen productos del catalogo.',
+        question: '¿Cómo busco productos?',
+        answer: 'Usa la barra de búsqueda del encabezado. Si inicias sesión también se incluyen productos del catálogo.',
     },
 ];
 
+const asyncResponseTimes = ['menos de 1 hora', '2 horas', 'hoy mismo'];
+
+function getSupportPriority(selectedIndex: number) {
+    const selectedFaq = faqs[selectedIndex] ?? faqs[0];
+    return `Sugerencia inmediata: revisa primero "${selectedFaq.question}"`;
+}
+
+function checkSupportAvailability() {
+    return new Promise<string>((resolve) => {
+        window.setTimeout(() => {
+            const nextTime = asyncResponseTimes[Math.floor(Math.random() * asyncResponseTimes.length)];
+            resolve(`Tiempo estimado de respuesta: ${nextTime}.`);
+        }, 900);
+    });
+}
+
 export default function HelpView() {
     const [openIndex, setOpenIndex] = React.useState(0);
+    const [quickGuide, setQuickGuide] = React.useState('');
+    const [availability, setAvailability] = React.useState('');
+    const [checkingAvailability, setCheckingAvailability] = React.useState(false);
+
+    function handleQuickGuide() {
+        setQuickGuide(getSupportPriority(openIndex));
+    }
+
+    async function handleAvailabilityCheck() {
+        setCheckingAvailability(true);
+        setAvailability('Consultando atención disponible...');
+
+        const result = await checkSupportAvailability();
+
+        setAvailability(result);
+        setCheckingAvailability(false);
+    }
 
     return (
         <PageLayout>
@@ -35,17 +68,42 @@ export default function HelpView() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 16 }}>
                         <a href="/recuperacion" style={{ textDecoration: 'none', background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 18, color: brandTheme.text }}>
                             <strong style={{ display: 'block', color: brandTheme.navy, marginBottom: 8 }}>Recuperar cuenta</strong>
-                            Cambia tu contrasena si no puedes entrar.
+                            Cambia tu contraseña si no puedes entrar.
                         </a>
                         <a href="/chat" style={{ textDecoration: 'none', background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 18, color: brandTheme.text }}>
                             <strong style={{ display: 'block', color: brandTheme.navy, marginBottom: 8 }}>Chat de soporte</strong>
-                            Pregunta por productos, busqueda o acceso.
+                            Pregunta por productos, búsqueda o acceso.
                         </a>
                         <a href="/contacto" style={{ textDecoration: 'none', background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 18, color: brandTheme.text }}>
                             <strong style={{ display: 'block', color: brandTheme.navy, marginBottom: 8 }}>Contacto</strong>
-                            Envia un mensaje al equipo de PetWord.
+                            Envía un mensaje al equipo de PetWord.
                         </a>
                     </div>
+
+                    <section style={{ background: '#fff', border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 18, display: 'grid', gap: 16, boxShadow: '0 12px 24px rgba(12, 40, 62, 0.08)' }}>
+                        <div>
+                            <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Soporte rápido</span>
+                            <h2 style={{ margin: '6px 0 0', color: brandTheme.navy }}>Elige cómo continuar</h2>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 14 }}>
+                            <article style={{ background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 16, display: 'grid', gap: 12 }}>
+                                <strong style={{ color: brandTheme.navy }}>Guía inmediata</strong>
+                                <button type="button" onClick={handleQuickGuide} style={{ border: 'none', borderRadius: 8, padding: '12px 14px', background: brandTheme.navy, color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                                    Obtener sugerencia
+                                </button>
+                                <span style={{ minHeight: 44, color: brandTheme.muted, lineHeight: 1.5 }}>{quickGuide || 'Selecciona una pregunta frecuente y recibe una sugerencia al momento.'}</span>
+                            </article>
+
+                            <article style={{ background: brandTheme.creamSoft, border: `1px solid ${brandTheme.border}`, borderRadius: 8, padding: 16, display: 'grid', gap: 12 }}>
+                                <strong style={{ color: brandTheme.navy }}>Disponibilidad de atención</strong>
+                                <button type="button" onClick={handleAvailabilityCheck} disabled={checkingAvailability} style={{ border: 'none', borderRadius: 8, padding: '12px 14px', background: brandTheme.orange, color: '#fff', fontWeight: 700, cursor: checkingAvailability ? 'wait' : 'pointer', opacity: checkingAvailability ? 0.78 : 1 }}>
+                                    {checkingAvailability ? 'Consultando...' : 'Consultar horario'}
+                                </button>
+                                <span style={{ minHeight: 44, color: brandTheme.muted, lineHeight: 1.5 }}>{availability || 'Consulta el tiempo estimado de respuesta del equipo.'}</span>
+                            </article>
+                        </div>
+                    </section>
 
                     <section style={{ display: 'grid', gap: 10 }}>
                         <h2 style={{ color: brandTheme.navy, margin: 0 }}>Preguntas frecuentes</h2>

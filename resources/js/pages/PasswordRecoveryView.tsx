@@ -24,7 +24,7 @@ export default function PasswordRecoveryView() {
         const nextErrors: Record<string, string[]> = {};
 
         if (!email.includes('@')) {
-            nextErrors.email = ['Ingresa un correo valido.'];
+            nextErrors.email = ['Ingresa un correo válido.'];
         }
 
         if (password.length < 8) {
@@ -135,7 +135,7 @@ export default function PasswordRecoveryView() {
                     </form>
 
                     <div style={{ marginTop: 18 }}>
-                        <a href="/login" style={{ color: brandTheme.orange, fontWeight: 700 }}>Volver al inicio de sesion</a>
+                        <a href="/login" style={{ color: brandTheme.orange, fontWeight: 700 }}>Volver al inicio de sesión</a>
                     </div>
                 </section>
             </main>

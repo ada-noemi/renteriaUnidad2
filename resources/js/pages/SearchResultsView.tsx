@@ -29,7 +29,7 @@ export default function SearchResultsView({ canSearchProducts, authLoading }: { 
             <main style={{ maxWidth: 1100, margin: '0 auto', padding: '34px 16px 52px' }}>
                 <section style={{ display: 'grid', gap: 18 }}>
                     <div>
-                        <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Busqueda</span>
+                        <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Búsqueda</span>
                         <h1 style={{ margin: '8px 0 12px', color: brandTheme.navy, fontSize: 'clamp(28px, 5vw, 40px)' }}>Resultados del sitio</h1>
                         <p style={{ margin: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
                             {hasQuery ? `Consulta: ${query}` : 'Ingresa un término en el buscador del encabezado para encontrar páginas y productos.'}
@@ -47,16 +47,16 @@ export default function SearchResultsView({ canSearchProducts, authLoading }: { 
 
                     {hasQuery && !authLoading && !canSearchProducts && allMatchingProducts.length > 0 ? (
                         <section style={formCardStyle}>
-                            <strong style={{ color: brandTheme.navy }}>Hay productos relacionados en el catalogo completo.</strong>
+                            <strong style={{ color: brandTheme.navy }}>Hay productos relacionados en el catálogo completo.</strong>
                             <p style={{ marginBottom: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
-                                Inicia sesión o regístrate para buscar también dentro de todas las categorias y productos privados del sitio.
+                                Inicia sesión o regístrate para buscar también dentro de todas las categorías y productos privados del sitio.
                             </p>
                         </section>
                     ) : null}
 
                     {authLoading ? (
                         <section style={formCardStyle}>
-                            <strong style={{ color: brandTheme.navy }}>Verificando acceso al catalogo...</strong>
+                            <strong style={{ color: brandTheme.navy }}>Verificando acceso al catálogo...</strong>
                             <p style={{ marginBottom: 0, color: brandTheme.muted, lineHeight: 1.7 }}>
                                 En unos segundos sabremos si esta búsqueda puede incluir todos los productos o solo el contenido público.
                             </p>
@@ -65,7 +65,7 @@ export default function SearchResultsView({ canSearchProducts, authLoading }: { 
 
                     {pageResults.length > 0 ? (
                         <section style={{ display: 'grid', gap: 14 }}>
-                            <h2 style={{ margin: 0, color: brandTheme.navy }}>Paginas</h2>
+                            <h2 style={{ margin: 0, color: brandTheme.navy }}>Páginas</h2>
                             <div style={{ display: 'grid', gap: 12 }}>
                                 {pageResults.map((page) => (
                                     <a

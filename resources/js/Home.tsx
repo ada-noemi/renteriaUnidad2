@@ -7,8 +7,8 @@ import { categories, products } from './siteData';
 
 const helpLinks = [
     'Ayuda',
-    'Contactanos',
-    'Recuperacion de contraseña',
+    'Contáctanos',
+    'Recuperación de contraseña',
     'Chat',
 ];
 
@@ -24,24 +24,20 @@ export default function Home({ isAuthenticated }: { isAuthenticated: boolean }) 
             <HomeHeroBanner />
 
             <main style={{ maxWidth: 1180, margin: '0 auto', padding: '18px 16px 36px' }}>
-                <section id="categorias" style={{ marginBottom: 24 }}>
+                <section id="categorías" style={{ marginBottom: 24 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
                         <div>
-                            <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Categorias</span>
+                            <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Categorías</span>
                             <h2 style={{ color: brandTheme.navy, margin: '4px 0 0', fontSize: 'clamp(24px, 4vw, 32px)' }}>Explora por tipo de mascota</h2>
-                            <p style={{ margin: '8px 0 0', color: brandTheme.muted, maxWidth: 620, lineHeight: 1.7 }}>
-                                Un acceso visual a las categorias principales.
-                            </p>
+                           
                         </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 18 }}>
                         {categories.map((category) => (
-                            <a
+                            <div
                                 key={category.id}
-                                href={`/categorias#${category.slug}`}
                                 style={{
-                                    textDecoration: 'none',
                                     color: brandTheme.text,
                                     textAlign: 'center',
                                     fontWeight: 700,
@@ -72,7 +68,7 @@ export default function Home({ isAuthenticated }: { isAuthenticated: boolean }) 
                                     />
                                 </div>
                                 <span style={{ display: 'block', color: '#df6f14', fontSize: 17 }}>{category.name}</span>
-                            </a>
+                            </div>
                         ))}
                     </div>
                 </section>
@@ -81,9 +77,8 @@ export default function Home({ isAuthenticated }: { isAuthenticated: boolean }) 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
                         <div>
                             <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>Productos</span>
-                            <h2 style={{ color: brandTheme.navy, margin: '4px 0 0', fontSize: 'clamp(24px, 4vw, 28px)' }}>Seccion principal del Home</h2>
+                            <h2 style={{ color: brandTheme.navy, margin: '4px 0 0', fontSize: 'clamp(24px, 4vw, 28px)' }}>Sección principal del Home</h2>
                         </div>
-                        <span style={{ color: brandTheme.muted }}>Se muestran 2 productos por categoria en el inicio.</span>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>

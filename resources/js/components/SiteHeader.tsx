@@ -8,13 +8,13 @@ export type NavLink = {
 
 export const mainNavLinks: NavLink[] = [
     { label: 'Inicio', href: '/' },
-    { label: 'Categorias', href: '/categorias' },
-    { label: 'Productos', href: '/productos' },
+    { label: 'Categorías', href: '/categorias' },
     { label: 'Perro', href: '/categorias/perros' },
     { label: 'Gato', href: '/categorias/gatos' },
     { label: 'Peces', href: '/categorias/peces' },
     { label: 'Aves', href: '/categorias/aves' },
-    { label: 'Pequenas Especies', href: '/categorias/roedores' },
+    { label: 'Pequeñas especies', href: '/categorias/roedores' },
+    { label: 'Adopciones', href: '/adopciones' },
 ];
 
 export default function SiteHeader() {
@@ -76,10 +76,10 @@ export default function SiteHeader() {
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                             <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center', background: 'rgba(239, 232, 216, 0.12)', borderRadius: 999, padding: '10px 14px', width: 'min(100%, 320px)', flex: '1 1 240px', border: `1px solid rgba(239, 232, 216, 0.28)` }}>
-                                <span style={{ color: brandTheme.creamSoft, marginRight: 8 }}>Busqueda</span>
+                                <span style={{ color: brandTheme.creamSoft, marginRight: 8 }}>Búsqueda</span>
                                 <input
                                     type="search"
-                                    placeholder="Buscar productos o categorias"
+                                    placeholder="Buscar productos o categorías"
                                     value={searchTerm}
                                     onChange={(event) => setSearchTerm(event.target.value)}
                                     style={{ border: 'none', outline: 'none', width: '100%', color: brandTheme.creamSoft, fontSize: 14, background: 'transparent' }}
@@ -95,14 +95,14 @@ export default function SiteHeader() {
                                         <path d="M17 11h6" />
                                     </svg>
                                 </a>
-                                <a href="/login" style={actionButtonStyle} aria-label="Inicio de sesion" title="Inicio de sesion">
+                                <a href="/login" style={actionButtonStyle} aria-label="Inicio de sesión" title="Inicio de sesión">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                                         <path d="M10 17l5-5-5-5" />
                                         <path d="M15 12H3" />
                                     </svg>
                                 </a>
-                                <a href="/buzon" style={actionButtonStyle} aria-label="Buzon" title="Buzon">
+                                <a href="/buzon" style={actionButtonStyle} aria-label="Buzón" title="Buzón">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M4 4h16v16H4z" />
                                         <path d="m22 6-10 7L2 6" />
@@ -123,7 +123,7 @@ export default function SiteHeader() {
                                         <path d="m18 3 3 3" />
                                     </svg>
                                 </a>
-                                <a href="/carrito" style={{ position: 'relative', ...actionButtonStyle }} aria-label="Carrito" title="Carrito estatico">
+                                <a href="/carrito" style={{ position: 'relative', ...actionButtonStyle }} aria-label="Carrito" title="Carrito estático">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <circle cx="9" cy="20" r="1" />
                                         <circle cx="18" cy="20" r="1" />
@@ -137,7 +137,7 @@ export default function SiteHeader() {
 
                     <div style={{ borderTop: `1px solid rgba(239, 232, 216, 0.18)`, paddingTop: 12, display: 'grid', gap: 10 }}>
                         <nav
-                            aria-label="Menu de navegacion web"
+                            aria-label="Menú de navegación web"
                             style={{
                                 display: 'flex',
                                 gap: 10,
