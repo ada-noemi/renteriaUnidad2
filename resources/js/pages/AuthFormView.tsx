@@ -91,7 +91,8 @@ async function executeRecaptcha(action: 'auth_login' | 'auth_register') {
 }
 
 export default function AuthFormView({ mode }: { mode: AuthMode }) {
-    const isRegister = mode === 'register';
+    const [activeMode, setActiveMode] = React.useState<AuthMode>(mode);
+    const [isTransitioning, setIsTransitioning] = React.useState(false);
     const [form, setForm] = React.useState<AuthFormState>({
         name: '',
         email: '',
@@ -103,25 +104,37 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
     const [loading, setLoading] = React.useState(false);
 
     React.useEffect(() => {
+        setActiveMode(mode);
+
         const notice = window.sessionStorage.getItem('auth_notice');
 
         if (notice) {
             setMessage(notice);
             window.sessionStorage.removeItem('auth_notice');
         }
-    }, []);
-
-    const submitLabel = isRegister ? 'Crear cuenta' : 'Iniciar sesión';
+    }, [mode]);
 
     function closeModal() {
         window.location.href = '/';
     }
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    function switchMode(nextMode: AuthMode) {
+        if (nextMode === activeMode || isTransitioning) {
+            return;
+        }
+
+        setIsTransitioning(true);
+        setActiveMode(nextMode);
+        window.history.replaceState({}, '', nextMode === 'register' ? '/registrar' : '/login');
+        window.setTimeout(() => setIsTransitioning(false), 420);
+    }
+
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>, submitMode: AuthMode) {
         event.preventDefault();
+        const isRegisterMode = submitMode === 'register';
         const nextErrors: Record<string, string[]> = {};
 
-        if (isRegister && form.name.trim().length < 3) {
+        if (isRegisterMode && form.name.trim().length < 3) {
             nextErrors.name = ['Ingresa al menos 3 caracteres.'];
         }
 
@@ -133,7 +146,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
             nextErrors.password = ['La contraseña debe tener al menos 8 caracteres.'];
         }
 
-        if (isRegister && form.password !== form.passwordConfirmation) {
+        if (isRegisterMode && form.password !== form.passwordConfirmation) {
             nextErrors.password_confirmation = ['Las contraseñas deben coincidir.'];
         }
 
@@ -148,10 +161,10 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
         setMessage('');
 
         try {
-            const recaptchaAction = isRegister ? 'auth_register' : 'auth_login';
+            const recaptchaAction = isRegisterMode ? 'auth_register' : 'auth_login';
             const recaptchaToken = await executeRecaptcha(recaptchaAction);
 
-            const payload = isRegister
+            const payload = isRegisterMode
                 ? {
                     name: form.name,
                     email: form.email,
@@ -167,12 +180,12 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                     recaptcha_action: recaptchaAction,
                 };
 
-            const endpoint = isRegister ? '/auth/register' : '/auth/login';
+            const endpoint = isRegisterMode ? '/auth/register' : '/auth/login';
             const response = await postJson<AuthResponse>(endpoint, payload);
 
             setMessage(response.message);
 
-            if (isRegister) {
+            if (isRegisterMode) {
                 window.sessionStorage.setItem('auth_notice', 'Cuenta creada correctamente. Ahora puedes iniciar sesión.');
                 window.location.href = '/login';
                 return;
@@ -197,6 +210,126 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
     function fieldError(name: keyof AuthFormState | 'password_confirmation' | 'recaptcha') {
         return errors[name]?.[0];
     }
+
+    function renderFormContent(currentMode: AuthMode) {
+        const isRegisterForm = currentMode === 'register';
+        const submitLabel = isRegisterForm ? 'Crear cuenta' : 'Iniciar sesión';
+
+        return (
+            <div style={{ display: 'grid', gap: 16 }}>
+                {isRegisterForm ? (
+                    <label style={{ display: 'grid', gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Nombre completo</span>
+                        <input
+                            type="text"
+                            value={form.name}
+                            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                            style={inputStyle}
+                            placeholder="Ej. Andrea Ramírez"
+                        />
+                        {fieldError('name') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('name')}</span> : null}
+                    </label>
+                ) : null}
+
+                <label style={{ display: 'grid', gap: 8 }}>
+                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Correo electrónico</span>
+                    <input
+                        type="email"
+                        value={form.email}
+                        onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                        style={inputStyle}
+                        placeholder="correo@ejemplo.com"
+                    />
+                    {fieldError('email') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('email')}</span> : null}
+                </label>
+
+                <label style={{ display: 'grid', gap: 8 }}>
+                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Contraseña</span>
+                    <input
+                        type="password"
+                        value={form.password}
+                        onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                        style={inputStyle}
+                        placeholder="Mínimo 8 caracteres"
+                    />
+                    {fieldError('password') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password')}</span> : null}
+                </label>
+
+                {isRegisterForm ? (
+                    <label style={{ display: 'grid', gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Confirmar contraseña</span>
+                        <input
+                            type="password"
+                            value={form.passwordConfirmation}
+                            onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
+                            style={inputStyle}
+                            placeholder="Repite tu contraseña"
+                        />
+                        {fieldError('password_confirmation') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password_confirmation')}</span> : null}
+                    </label>
+                ) : null}
+
+                {fieldError('recaptcha') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('recaptcha')}</span> : null}
+
+                {message ? (
+                    <div style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
+                        {message}
+                    </div>
+                ) : null}
+
+                <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                        border: 'none',
+                        borderRadius: 14,
+                        padding: '14px 18px',
+                        background: brandTheme.orange,
+                        color: '#fff',
+                        fontSize: 15,
+                        fontWeight: 700,
+                        cursor: loading ? 'wait' : 'pointer',
+                    }}
+                >
+                    {loading ? 'Procesando...' : submitLabel}
+                </button>
+
+                <div style={{ color: brandTheme.muted, lineHeight: 1.7 }}>
+                    {isRegisterForm ? (
+                        <span>
+                            ¿Ya tienes cuenta?{' '}
+                            <button
+                                type="button"
+                                onClick={() => switchMode('login')}
+                                style={{ background: 'transparent', border: 'none', color: brandTheme.orange, fontWeight: 700, padding: 0, cursor: 'pointer' }}
+                            >
+                                Inicia sesión
+                            </button>
+                        </span>
+                    ) : (
+                        <span>
+                            ¿Aún no tienes cuenta?{' '}
+                            <button
+                                type="button"
+                                onClick={() => switchMode('register')}
+                                style={{ background: 'transparent', border: 'none', color: brandTheme.orange, fontWeight: 700, padding: 0, cursor: 'pointer' }}
+                            >
+                                Regístrate
+                            </button>
+                        </span>
+                    )}
+                </div>
+
+                {!isRegisterForm ? (
+                    <div>
+                        <a href="/recuperacion" style={{ color: brandTheme.orange, fontWeight: 700 }}>Olvide mi contrasena</a>
+                    </div>
+                ) : null}
+            </div>
+        );
+    }
+
+    const cardRotation = activeMode === 'register' ? 0 : 180;
 
     return (
         <PageLayout>
@@ -227,7 +360,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                     <section
                         onClick={(event) => event.stopPropagation()}
                         style={{
-                            width: 'min(100%, 500px)',
+                            width: 'min(100%, 560px)',
                             position: 'relative',
                             padding: 32,
                             margin: '16px 0',
@@ -266,112 +399,86 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                             ×
                         </a>
 
-                        <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
-                            {isRegister ? 'Registro' : 'Autenticación'}
-                        </span>
-                        <h1 style={{ margin: '8px 0 10px', color: brandTheme.navy, fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.15 }}>
-                            {isRegister ? 'Crea tu cuenta' : 'Inicia sesión'}
-                        </h1>
-                        <div style={{ marginBottom: 18, borderRadius: 14, padding: '14px 16px', background: 'rgba(18, 58, 87, 0.05)', color: brandTheme.navy, fontWeight: 700 }}>
-                            {isRegister ? 'Completa tus datos para crear tu usuario.' : 'Ingresa tu correo y contraseña para autenticarte.'}
-                        </div>
-
-                        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 16 }}>
-                            {isRegister ? (
-                                <label style={{ display: 'grid', gap: 8 }}>
-                                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Nombre completo</span>
-                                    <input
-                                        type="text"
-                                        value={form.name}
-                                        onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                                        style={inputStyle}
-                                        placeholder="Ej. Andrea Ramírez"
-                                    />
-                                    {fieldError('name') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('name')}</span> : null}
-                                </label>
-                            ) : null}
-
-                            <label style={{ display: 'grid', gap: 8 }}>
-                                <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Correo electrónico</span>
-                                <input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-                                    style={inputStyle}
-                                    placeholder="correo@ejemplo.com"
-                                />
-                                {fieldError('email') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('email')}</span> : null}
-                            </label>
-
-                            <label style={{ display: 'grid', gap: 8 }}>
-                                <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Contraseña</span>
-                                <input
-                                    type="password"
-                                    value={form.password}
-                                    onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                                    style={inputStyle}
-                                    placeholder="Mínimo 8 caracteres"
-                                />
-                                {fieldError('password') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password')}</span> : null}
-                            </label>
-
-                            {isRegister ? (
-                                <label style={{ display: 'grid', gap: 8 }}>
-                                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Confirmar contraseña</span>
-                                    <input
-                                        type="password"
-                                        value={form.passwordConfirmation}
-                                        onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
-                                        style={inputStyle}
-                                        placeholder="Repite tu contraseña"
-                                    />
-                                    {fieldError('password_confirmation') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password_confirmation')}</span> : null}
-                                </label>
-                            ) : null}
-
-                            {fieldError('recaptcha') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('recaptcha')}</span> : null}
-
-                            {message ? (
-                                <div style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
-                                    {message}
+                        <div style={{ display: 'grid', gap: 16 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+                                <div>
+                                    <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
+                                        {activeMode === 'register' ? 'Registro' : 'Autenticación'}
+                                    </span>
+                                    <h1 style={{ margin: '8px 0 0', color: brandTheme.navy, fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.15 }}>
+                                        {activeMode === 'register' ? 'Crea tu cuenta' : 'Inicia sesión'}
+                                    </h1>
                                 </div>
-                            ) : null}
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                style={{
-                                    border: 'none',
-                                    borderRadius: 14,
-                                    padding: '14px 18px',
-                                    background: brandTheme.orange,
-                                    color: '#fff',
-                                    fontSize: 15,
-                                    fontWeight: 700,
-                                    cursor: loading ? 'wait' : 'pointer',
-                                }}
-                            >
-                                {loading ? 'Procesando...' : submitLabel}
-                            </button>
-                        </form>
-
-                        <div style={{ marginTop: 18, color: brandTheme.muted, lineHeight: 1.7 }}>
-                            {isRegister ? (
-                                <span>
-                                    ¿Ya tienes cuenta? <a href="/login" style={{ color: brandTheme.orange, fontWeight: 700 }}>Inicia sesión</a>
-                                </span>
-                            ) : (
-                                <span>
-                                    ¿Aún no tienes cuenta? <a href="/registrar" style={{ color: brandTheme.orange, fontWeight: 700 }}>Regístrate</a>
-                                </span>
-                            )}
-                        </div>
-
-                        {!isRegister ? (
-                            <div style={{ marginTop: 8 }}>
-                                <a href="/recuperacion" style={{ color: brandTheme.orange, fontWeight: 700 }}>Olvide mi contrasena</a>
+                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode('register')}
+                                        style={{
+                                            border: activeMode === 'register' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
+                                            borderRadius: 999,
+                                            padding: '8px 12px',
+                                            background: activeMode === 'register' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
+                                            color: brandTheme.navy,
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        Registro
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode('login')}
+                                        style={{
+                                            border: activeMode === 'login' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
+                                            borderRadius: 999,
+                                            padding: '8px 12px',
+                                            background: activeMode === 'login' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
+                                            color: brandTheme.navy,
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        Inicio
+                                    </button>
+                                </div>
                             </div>
-                        ) : null}
+
+                            <div style={{ perspective: '1600px' }}>
+                                <div
+                                    style={{
+                                        position: 'relative',
+                                        transformStyle: 'preserve-3d',
+                                        transition: 'transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                                        transform: `rotateY(${cardRotation}deg)`,
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            position: 'relative',
+                                            backfaceVisibility: 'hidden',
+                                            transform: 'rotateY(0deg)',
+                                        }}
+                                    >
+                                        <form onSubmit={(event) => handleSubmit(event, 'register')} style={{ display: 'grid', gap: 16 }}>
+                                            {renderFormContent('register')}
+                                        </form>
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            backfaceVisibility: 'hidden',
+                                            transform: 'rotateY(180deg)',
+                                        }}
+                                    >
+                                        <form onSubmit={(event) => handleSubmit(event, 'login')} style={{ display: 'grid', gap: 16 }}>
+                                            {renderFormContent('login')}
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div style={{ marginTop: 14, textAlign: 'center' }}>
                             <a
