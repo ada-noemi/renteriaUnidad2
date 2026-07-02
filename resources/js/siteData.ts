@@ -99,15 +99,15 @@ export const products: Product[] = [
 
 export const sitePages: SitePage[] = [
     { id: 'inicio', title: 'Inicio11', description: 'Portada principal del sitio.', href: '/', section: 'principal' },
-    { id: 'categorias', title: 'Categorias', description: 'Explora categorias de mascotas.', href: '/categorias', section: 'principal' },
-    { id: 'productos', title: 'Productos', description: 'Catalogo de productos disponibles.', href: '/productos', section: 'principal' },
+    { id: 'categorias', title: 'Categorías', description: 'Explora categorías de mascotas.', href: '/categorias', section: 'principal' },
+    { id: 'productos', title: 'Productos', description: 'Catálogo de productos disponibles.', href: '/productos', section: 'principal' },
     { id: 'registrar', title: 'Registrar', description: 'Alta de nuevos usuarios.', href: '/registrar', section: 'adicional' },
-    { id: 'buzon', title: 'Buzon', description: 'Mensajes y notificaciones.', href: '/buzon', section: 'adicional' },
-    { id: 'login', title: 'Inicio de sesion', description: 'Acceso de usuarios registrados.', href: '/login', section: 'adicional' },
+    { id: 'buzon', title: 'Buzón', description: 'Mensajes y notificaciones.', href: '/buzon', section: 'adicional' },
+    { id: 'login', title: 'Inicio de sesión', description: 'Acceso de usuarios registrados.', href: '/login', section: 'adicional' },
     { id: 'ayuda', title: 'Ayuda', description: 'Soporte y preguntas frecuentes.', href: '/ayuda', section: 'adicional' },
-    { id: 'contacto', title: 'Contactanos', description: 'Canales de soporte y contacto.', href: '/contacto', section: 'adicional' },
-    { id: 'recuperacion', title: 'Recuperacion de contraseña', description: 'Recupera el acceso a tu cuenta.', href: '/recuperacion', section: 'adicional' },
+    { id: 'contacto', title: 'Contáctanos', description: 'Canales de soporte y contacto.', href: '/contacto', section: 'adicional' },
+    { id: 'recuperacion', title: 'Recuperación de contraseña', description: 'Recupera el acceso a tu cuenta.', href: '/recuperacion', section: 'adicional' },
     { id: 'chat', title: 'Chat', description: 'Atencion en linea para el usuario.', href: '/chat', section: 'adicional' },
-    { id: 'mapa-del-sitio', title: 'Mapa del sitio', description: 'Estructura general de la navegacion.', href: '/mapa-del-sitio', section: 'adicional' },
-    { id: 'carrito', title: 'Carrito', description: 'Vista estatica del carrito.', href: '/carrito', section: 'adicional' },
+    { id: 'mapa-del-sitio', title: 'Mapa del sitio', description: 'Estructura general de la navegación.', href: '/mapa-del-sitio', section: 'adicional' },
+    { id: 'carrito', title: 'Carrito', description: 'Vista estática del carrito.', href: '/carrito', section: 'adicional' },
 ];

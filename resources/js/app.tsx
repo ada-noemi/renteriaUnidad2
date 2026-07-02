@@ -110,7 +110,7 @@ function AppRouter() {
 
     function renderProtectedView(view: React.ReactNode) {
         if (authLoading) {
-            return <SectionView title="Cargando" description="Estamos verificando tu sesión para mostrar esta sección." />;
+            return null;
         }
 
         if (!authState.authenticated) {
@@ -146,7 +146,7 @@ function AppRouter() {
                 </PageLayout>
             );
         case '/mas-vendidos':
-            return <SectionView title="Mas vendidos" description="Vista separada para mostrar productos con mayor demanda." />;
+            return <SectionView title="Más vendidos" description="Vista separada para mostrar productos con mayor demanda." />;
         case '/contacto':
             return <ContactView />;
         case '/ayuda':

@@ -43,6 +43,75 @@ const inputStyle: React.CSSProperties = {
     boxSizing: 'border-box',
 };
 
+const animationStyles = `
+@keyframes backdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalPopIn {
+    0% { opacity: 0; transform: translateY(24px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes messageFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-backdrop-animated {
+    animation: backdropFadeIn 0.25s ease-out both;
+}
+
+.auth-modal-animated {
+    animation: modalPopIn 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.auth-close-btn-animated {
+    transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.auth-close-btn-animated:hover {
+    transform: rotate(90deg);
+    background-color: rgba(18, 58, 87, 0.12);
+}
+
+.auth-input-animated {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-input-animated:focus {
+    outline: none;
+    border-color: ${brandTheme.orange};
+    box-shadow: 0 0 0 3px rgba(199, 100, 42, 0.15);
+}
+
+.auth-submit-btn-animated {
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.auth-submit-btn-animated:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+}
+
+.auth-submit-btn-animated:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.auth-message-animated {
+    animation: messageFadeIn 0.3s ease-out both;
+}
+
+.auth-footer-link-animated {
+    transition: opacity 0.2s ease;
+}
+
+.auth-footer-link-animated:hover {
+    opacity: 0.75;
+}
+`;
+
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
@@ -92,7 +161,6 @@ async function executeRecaptcha(action: 'auth_login' | 'auth_register') {
 
 export default function AuthFormView({ mode }: { mode: AuthMode }) {
     const [activeMode, setActiveMode] = React.useState<AuthMode>(mode);
-    const [isTransitioning, setIsTransitioning] = React.useState(false);
     const [form, setForm] = React.useState<AuthFormState>({
         name: '',
         email: '',
@@ -119,19 +187,19 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
     }
 
     function switchMode(nextMode: AuthMode) {
-        if (nextMode === activeMode || isTransitioning) {
+        if (nextMode === activeMode || loading) {
             return;
         }
 
-        setIsTransitioning(true);
+        setErrors({});
+        setMessage('');
         setActiveMode(nextMode);
         window.history.replaceState({}, '', nextMode === 'register' ? '/registrar' : '/login');
-        window.setTimeout(() => setIsTransitioning(false), 420);
     }
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>, submitMode: AuthMode) {
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const isRegisterMode = submitMode === 'register';
+        const isRegisterMode = activeMode === 'register';
         const nextErrors: Record<string, string[]> = {};
 
         if (isRegisterMode && form.name.trim().length < 3) {
@@ -191,7 +259,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                 return;
             }
 
-            window.sessionStorage.setItem('auth_notice', 'Sesion iniciada correctamente.');
+            window.sessionStorage.setItem('auth_notice', 'Sesión iniciada correctamente.');
             window.location.href = '/buzon';
         } catch (error) {
             if (error instanceof Error) {
@@ -211,128 +279,13 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
         return errors[name]?.[0];
     }
 
-    function renderFormContent(currentMode: AuthMode) {
-        const isRegisterForm = currentMode === 'register';
-        const submitLabel = isRegisterForm ? 'Crear cuenta' : 'Iniciar sesión';
-
-        return (
-            <div style={{ display: 'grid', gap: 16 }}>
-                {isRegisterForm ? (
-                    <label style={{ display: 'grid', gap: 8 }}>
-                        <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Nombre completo</span>
-                        <input
-                            type="text"
-                            value={form.name}
-                            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                            style={inputStyle}
-                            placeholder="Ej. Andrea Ramírez"
-                        />
-                        {fieldError('name') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('name')}</span> : null}
-                    </label>
-                ) : null}
-
-                <label style={{ display: 'grid', gap: 8 }}>
-                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Correo electrónico</span>
-                    <input
-                        type="email"
-                        value={form.email}
-                        onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-                        style={inputStyle}
-                        placeholder="correo@ejemplo.com"
-                    />
-                    {fieldError('email') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('email')}</span> : null}
-                </label>
-
-                <label style={{ display: 'grid', gap: 8 }}>
-                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Contraseña</span>
-                    <input
-                        type="password"
-                        value={form.password}
-                        onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                        style={inputStyle}
-                        placeholder="Mínimo 8 caracteres"
-                    />
-                    {fieldError('password') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password')}</span> : null}
-                </label>
-
-                {isRegisterForm ? (
-                    <label style={{ display: 'grid', gap: 8 }}>
-                        <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Confirmar contraseña</span>
-                        <input
-                            type="password"
-                            value={form.passwordConfirmation}
-                            onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
-                            style={inputStyle}
-                            placeholder="Repite tu contraseña"
-                        />
-                        {fieldError('password_confirmation') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password_confirmation')}</span> : null}
-                    </label>
-                ) : null}
-
-                {fieldError('recaptcha') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('recaptcha')}</span> : null}
-
-                {message ? (
-                    <div style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
-                        {message}
-                    </div>
-                ) : null}
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    style={{
-                        border: 'none',
-                        borderRadius: 14,
-                        padding: '14px 18px',
-                        background: brandTheme.orange,
-                        color: '#fff',
-                        fontSize: 15,
-                        fontWeight: 700,
-                        cursor: loading ? 'wait' : 'pointer',
-                    }}
-                >
-                    {loading ? 'Procesando...' : submitLabel}
-                </button>
-
-                <div style={{ color: brandTheme.muted, lineHeight: 1.7 }}>
-                    {isRegisterForm ? (
-                        <span>
-                            ¿Ya tienes cuenta?{' '}
-                            <button
-                                type="button"
-                                onClick={() => switchMode('login')}
-                                style={{ background: 'transparent', border: 'none', color: brandTheme.orange, fontWeight: 700, padding: 0, cursor: 'pointer' }}
-                            >
-                                Inicia sesión
-                            </button>
-                        </span>
-                    ) : (
-                        <span>
-                            ¿Aún no tienes cuenta?{' '}
-                            <button
-                                type="button"
-                                onClick={() => switchMode('register')}
-                                style={{ background: 'transparent', border: 'none', color: brandTheme.orange, fontWeight: 700, padding: 0, cursor: 'pointer' }}
-                            >
-                                Regístrate
-                            </button>
-                        </span>
-                    )}
-                </div>
-
-                {!isRegisterForm ? (
-                    <div>
-                        <a href="/recuperacion" style={{ color: brandTheme.orange, fontWeight: 700 }}>Olvide mi contrasena</a>
-                    </div>
-                ) : null}
-            </div>
-        );
-    }
-
-    const cardRotation = activeMode === 'register' ? 0 : 180;
+    const isRegister = activeMode === 'register';
+    const submitLabel = isRegister ? 'Crear cuenta' : 'Iniciar sesión';
 
     return (
         <PageLayout>
+            <style>{animationStyles}</style>
+
             <main style={{ minHeight: 'calc(100vh - 164px)', position: 'relative', overflow: 'hidden' }}>
                 <div
                     style={{
@@ -344,6 +297,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
 
                 <div
                     onClick={closeModal}
+                    className="auth-backdrop-animated"
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -359,6 +313,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                 >
                     <section
                         onClick={(event) => event.stopPropagation()}
+                        className="auth-modal-animated"
                         style={{
                             width: 'min(100%, 560px)',
                             position: 'relative',
@@ -379,6 +334,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                 event.preventDefault();
                                 closeModal();
                             }}
+                            className="auth-close-btn-animated"
                             style={{
                                 position: 'absolute',
                                 top: 16,
@@ -403,21 +359,22 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
                                 <div>
                                     <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
-                                        {activeMode === 'register' ? 'Registro' : 'Autenticación'}
+                                        {isRegister ? 'Registro' : 'Autenticación'}
                                     </span>
                                     <h1 style={{ margin: '8px 0 0', color: brandTheme.navy, fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.15 }}>
-                                        {activeMode === 'register' ? 'Crea tu cuenta' : 'Inicia sesión'}
+                                        {isRegister ? 'Crea tu cuenta' : 'Inicia sesión'}
                                     </h1>
                                 </div>
+
                                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                     <button
                                         type="button"
                                         onClick={() => switchMode('register')}
                                         style={{
-                                            border: activeMode === 'register' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
+                                            border: isRegister ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
                                             borderRadius: 999,
                                             padding: '8px 12px',
-                                            background: activeMode === 'register' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
+                                            background: isRegister ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
                                             color: brandTheme.navy,
                                             fontWeight: 700,
                                             cursor: 'pointer',
@@ -429,10 +386,10 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                         type="button"
                                         onClick={() => switchMode('login')}
                                         style={{
-                                            border: activeMode === 'login' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
+                                            border: !isRegister ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
                                             borderRadius: 999,
                                             padding: '8px 12px',
-                                            background: activeMode === 'login' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
+                                            background: !isRegister ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
                                             color: brandTheme.navy,
                                             fontWeight: 700,
                                             cursor: 'pointer',
@@ -443,51 +400,108 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                                 </div>
                             </div>
 
-                            <div style={{ perspective: '1600px' }}>
-                                <div
+                            <div style={{ borderRadius: 14, padding: '14px 16px', background: 'rgba(18, 58, 87, 0.05)', color: brandTheme.navy, fontWeight: 700 }}>
+                                {isRegister ? 'Completa tus datos para crear tu usuario.' : 'Ingresa tu correo y contraseña para autenticarte.'}
+                            </div>
+
+                            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 16 }}>
+                                {isRegister ? (
+                                    <label style={{ display: 'grid', gap: 8 }}>
+                                        <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Nombre completo</span>
+                                        <input
+                                            type="text"
+                                            value={form.name}
+                                            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                                            className="auth-input-animated"
+                                            style={inputStyle}
+                                            placeholder="Ej. Andrea Ramírez"
+                                        />
+                                        {fieldError('name') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('name')}</span> : null}
+                                    </label>
+                                ) : null}
+
+                                <label style={{ display: 'grid', gap: 8 }}>
+                                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Correo electrónico</span>
+                                    <input
+                                        type="email"
+                                        value={form.email}
+                                        onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                                        className="auth-input-animated"
+                                        style={inputStyle}
+                                        placeholder="correo@ejemplo.com"
+                                    />
+                                    {fieldError('email') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('email')}</span> : null}
+                                </label>
+
+                                <label style={{ display: 'grid', gap: 8 }}>
+                                    <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Contraseña</span>
+                                    <input
+                                        type="password"
+                                        value={form.password}
+                                        onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                                        className="auth-input-animated"
+                                        style={inputStyle}
+                                        placeholder="Mínimo 8 caracteres"
+                                    />
+                                    {fieldError('password') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password')}</span> : null}
+                                </label>
+
+                                {isRegister ? (
+                                    <label style={{ display: 'grid', gap: 8 }}>
+                                        <span style={{ fontWeight: 700, color: brandTheme.navyDeep }}>Confirmar contraseña</span>
+                                        <input
+                                            type="password"
+                                            value={form.passwordConfirmation}
+                                            onChange={(event) => setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))}
+                                            className="auth-input-animated"
+                                            style={inputStyle}
+                                            placeholder="Repite tu contraseña"
+                                        />
+                                        {fieldError('password_confirmation') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('password_confirmation')}</span> : null}
+                                    </label>
+                                ) : null}
+
+                                {fieldError('recaptcha') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('recaptcha')}</span> : null}
+
+                                {message ? (
+                                    <div className="auth-message-animated" style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
+                                        {message}
+                                    </div>
+                                ) : null}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="auth-submit-btn-animated"
                                     style={{
-                                        position: 'relative',
-                                        transformStyle: 'preserve-3d',
-                                        transition: 'transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                                        transform: `rotateY(${cardRotation}deg)`,
+                                        border: 'none',
+                                        borderRadius: 14,
+                                        padding: '14px 18px',
+                                        background: brandTheme.orange,
+                                        color: '#fff',
+                                        fontSize: 15,
+                                        fontWeight: 700,
+                                        cursor: loading ? 'wait' : 'pointer',
                                     }}
                                 >
-                                    <div
-                                        style={{
-                                            position: 'relative',
-                                            backfaceVisibility: 'hidden',
-                                            transform: 'rotateY(0deg)',
-                                        }}
-                                    >
-                                        <form onSubmit={(event) => handleSubmit(event, 'register')} style={{ display: 'grid', gap: 16 }}>
-                                            {renderFormContent('register')}
-                                        </form>
-                                    </div>
+                                    {loading ? 'Procesando...' : submitLabel}
+                                </button>
+                            </form>
 
-                                    <div
-                                        style={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            backfaceVisibility: 'hidden',
-                                            transform: 'rotateY(180deg)',
-                                        }}
-                                    >
-                                        <form onSubmit={(event) => handleSubmit(event, 'login')} style={{ display: 'grid', gap: 16 }}>
-                                            {renderFormContent('login')}
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            {!isRegister ? (
+                                <a href="/recuperacion" className="auth-footer-link-animated" style={{ color: brandTheme.orange, fontWeight: 700 }}>
+                                    Olvidé mi contraseña
+                                </a>
+                            ) : null}
 
-                        <div style={{ marginTop: 14, textAlign: 'center' }}>
                             <a
                                 href="/"
                                 onClick={(event) => {
                                     event.preventDefault();
                                     closeModal();
                                 }}
-                                style={{ color: brandTheme.muted, textDecoration: 'none', fontSize: 14 }}
+                                className="auth-footer-link-animated"
+                                style={{ color: brandTheme.muted, textDecoration: 'none', fontSize: 14, textAlign: 'center' }}
                             >
                                 Volver al inicio
                             </a>
