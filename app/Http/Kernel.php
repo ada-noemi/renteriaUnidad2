@@ -17,7 +17,12 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        
+        // Middlewares de seguridad personalizados
+        \App\Http\Middleware\AttackDetection::class,
         \App\Http\Middleware\SecurityHeaders::class,
+        \App\Http\Middleware\SqlInjectionProtection::class,
+        \App\Http\Middleware\XssProtection::class,
     ];
 
     /**
@@ -31,13 +36,18 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-
+            
+            // Middlewares de sanitización y protección
+            \App\Http\Middleware\InputSanitization::class,
+            \App\Http\Middleware\AdvancedRateLimiting::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ],
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\InputSanitization::class,
+            \App\Http\Middleware\AdvancedRateLimiting::class,
         ],
     ];
 
