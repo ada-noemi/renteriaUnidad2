@@ -17,6 +17,19 @@ export const mainNavLinks: NavLink[] = [
     { label: 'Adopciones', href: '/adopciones' },
 ];
 
+type AuthStatus = {
+    authenticated: boolean;
+    user?: {
+        id: number;
+        name: string;
+        email: string;
+    } | null;
+};
+
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+}
+
 // Animaciones: entrada del header, hover en links/botones/logo, foco en la búsqueda
 const animationStyles = `
 @keyframes headerFadeDown {
@@ -65,10 +78,17 @@ const animationStyles = `
     background-color: rgba(239, 232, 216, 0.2);
     border-color: rgba(239, 232, 216, 0.5);
 }
+
+.auth-session-active a[href="/login"],
+.auth-session-active a[href="/registrar"] {
+    display: none !important;
+}
 `;
 
 export default function SiteHeader() {
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [authState, setAuthState] = React.useState<AuthStatus>({ authenticated: false, user: null });
+    const [logoutLoading, setLogoutLoading] = React.useState(false);
 
     const actionButtonStyle: React.CSSProperties = {
         display: 'inline-flex',
@@ -94,6 +114,73 @@ export default function SiteHeader() {
         }
 
         window.location.href = `/busqueda?q=${encodeURIComponent(query)}`;
+    }
+
+    React.useEffect(() => {
+        let active = true;
+
+        async function loadAuthStatus() {
+            try {
+                const response = await fetch('/auth/status', {
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('No se pudo consultar la sesión.');
+                }
+
+                const data = (await response.json()) as AuthStatus;
+
+                if (active) {
+                    setAuthState({
+                        authenticated: data.authenticated,
+                        user: data.user ?? null,
+                    });
+                }
+            } catch {
+                if (active) {
+                    setAuthState({ authenticated: false, user: null });
+                }
+            }
+        }
+
+        loadAuthStatus();
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    async function handleLogout() {
+        if (logoutLoading) {
+            return;
+        }
+
+        setLogoutLoading(true);
+
+        try {
+            const response = await fetch('/auth/logout', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudo cerrar la sesión.');
+            }
+
+            window.sessionStorage.setItem('auth_notice', 'Sesión cerrada correctamente.');
+            window.location.href = '/login';
+        } catch {
+            window.alert('No se pudo cerrar la sesión. Intenta de nuevo.');
+            setLogoutLoading(false);
+        }
     }
 
     return (
@@ -141,8 +228,25 @@ export default function SiteHeader() {
                                 />
                             </form>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', color: brandTheme.creamSoft, fontWeight: 700 }}>
-                                <a href="/registrar" className="action-btn-animated" style={actionButtonStyle} aria-label="Registrar" title="Registrar">
+                            <div className={authState.authenticated ? 'auth-session-active' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', color: brandTheme.creamSoft, fontWeight: 700 }}>
+                                {authState.authenticated ? (
+                                    <button
+                                        type="button"
+                                        className="action-btn-animated"
+                                        onClick={handleLogout}
+                                        disabled={logoutLoading}
+                                        style={{ ...actionButtonStyle, cursor: logoutLoading ? 'wait' : 'pointer', opacity: logoutLoading ? 0.72 : 1 }}
+                                        aria-label="Cerrar sesión"
+                                        title={authState.user?.name ? `Cerrar sesión de ${authState.user.name}` : 'Cerrar sesión'}
+                                    >
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                            <path d="M16 17l5-5-5-5" />
+                                            <path d="M21 12H9" />
+                                        </svg>
+                                    </button>
+                                ) : null}
+                                <a href="/registrar" className="action-btn-animated" style={{ ...actionButtonStyle, display: authState.authenticated ? 'none' : 'inline-flex' }} aria-label="Registrar" title="Registrar">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M15 20a4 4 0 0 0-8 0" />
                                         <circle cx="11" cy="8" r="4" />
