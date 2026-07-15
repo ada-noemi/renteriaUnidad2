@@ -17,18 +17,29 @@ class AuthController extends Controller
     {
         return response()->json([
             'authenticated' => $request->user() !== null,
-            'user' => $request->user()?->only(['id', 'name', 'email']),
+            'user' => $request->user()?->only(['id', 'name', 'email', 'user_type']),
         ]);
     }
 
     public function register(Request $request): JsonResponse
     {
+        if (User::query()->where('email', $request->string('email')->toString())->exists()) {
+            return response()->json([
+                'message' => 'Este correo ya está registrado. Inicia sesión o usa otro correo.',
+                'errors' => [
+                    'email' => ['Este correo ya está registrado. Inicia sesión o usa otro correo.'],
+                ],
+            ], 422);
+        }
+
         $payload = $request->validate([
             'name' => ['required', 'string', 'min:3', 'max:120'],
             'email' => ['required', 'email', 'max:120', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'recaptcha_token' => ['required', 'string'],
             'recaptcha_action' => ['required', 'string'],
+        ], [
+            'email.unique' => 'Este correo ya está registrado. Inicia sesión o usa otro correo.',
         ]);
 
         $this->verifyRecaptcha($request, 'auth_register');
@@ -37,19 +48,22 @@ class AuthController extends Controller
             'name' => $payload['name'],
             'email' => $payload['email'],
             'password' => $payload['password'],
+            'user_type' => User::TYPE_CLIENT,
         ]);
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->markActiveSession($request, $user);
 
         $this->logSecurityEvent('auth.register.success', $request, [
             'user_id' => $user->id,
             'email' => $user->email,
+            'user_type' => $user->user_type,
         ]);
 
         return response()->json([
             'message' => 'Cuenta creada correctamente.',
-            'user' => $user->only(['id', 'name', 'email']),
+            'user' => $user->only(['id', 'name', 'email', 'user_type']),
         ], 201);
     }
 
@@ -79,16 +93,18 @@ class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $this->markActiveSession($request, $request->user());
 
         $this->logSecurityEvent('auth.login.success', $request, [
             'user_id' => $request->user()?->id,
             'email' => $request->user()?->email,
+            'user_type' => $request->user()?->user_type,
             'remember' => $request->boolean('remember'),
         ]);
 
         return response()->json([
             'message' => 'Sesión iniciada correctamente.',
-            'user' => $request->user()?->only(['id', 'name', 'email']),
+            'user' => $request->user()?->only(['id', 'name', 'email', 'user_type']),
         ]);
     }
 
@@ -97,6 +113,10 @@ class AuthController extends Controller
         $user = $request->user();
 
         Auth::guard('web')->logout();
+
+        if ($user) {
+            $user->forceFill(['active_session_id' => null])->save();
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -185,6 +205,13 @@ class AuthController extends Controller
                 'recaptcha' => ['No se pudo validar la verificación humana. Intenta de nuevo.'],
             ]);
         }
+    }
+
+    private function markActiveSession(Request $request, ?User $user): void
+    {
+        $user?->forceFill([
+            'active_session_id' => $request->session()->getId(),
+        ])->save();
     }
 
     /**

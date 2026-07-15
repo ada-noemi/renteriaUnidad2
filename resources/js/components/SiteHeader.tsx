@@ -23,6 +23,7 @@ type AuthStatus = {
         id: number;
         name: string;
         email: string;
+        user_type?: 'cliente' | 'admin';
     } | null;
 };
 
@@ -245,6 +246,16 @@ export default function SiteHeader() {
                                             <path d="M21 12H9" />
                                         </svg>
                                     </button>
+                                ) : null}
+                                {authState.user?.user_type === 'admin' ? (
+                                    <a href="/admin" className="action-btn-animated" style={actionButtonStyle} aria-label="Panel administrativo" title="Panel administrativo">
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                                        </svg>
+                                    </a>
                                 ) : null}
                                 <a href="/registrar" className="action-btn-animated" style={{ ...actionButtonStyle, display: authState.authenticated ? 'none' : 'inline-flex' }} aria-label="Registrar" title="Registrar">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

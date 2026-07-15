@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveSession;
+use App\Http\Middleware\EnsureFrontendAuthenticated;
+use App\Http\Middleware\EnsureUserType;
 use App\Http\Middleware\SecurityRequestLogger;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             SecurityRequestLogger::class,
+            EnsureActiveSession::class,
+        ]);
+
+        $middleware->alias([
+            'frontend.auth' => EnsureFrontendAuthenticated::class,
+            'user.type' => EnsureUserType::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

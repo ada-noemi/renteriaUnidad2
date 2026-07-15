@@ -1,5 +1,4 @@
 import React from 'react';
-import PageLayout from '../components/PageLayout';
 import { brandTheme } from '../theme';
 
 export type AuthMode = 'login' | 'register';
@@ -10,9 +9,20 @@ type AuthResponse = {
         id: number;
         name: string;
         email: string;
+        user_type?: 'cliente' | 'admin';
     };
     errors?: Record<string, string[]>;
 };
+
+class RequestError extends Error {
+    errors?: Record<string, string[]>;
+
+    constructor(message: string, errors?: Record<string, string[]>) {
+        super(message);
+        this.name = 'RequestError';
+        this.errors = errors;
+    }
+}
 
 type AuthFormState = {
     name: string;
@@ -122,6 +132,76 @@ const animationStyles = `
 .auth-footer-link-animated:hover {
     opacity: 0.75;
 }
+
+.auth-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(360px, 0.88fr);
+    background: #08090c;
+    color: ${brandTheme.creamSoft};
+    font-family: Segoe UI, sans-serif;
+    overflow: hidden;
+}
+
+.auth-brand-panel {
+    position: relative;
+    display: grid;
+    align-items: center;
+    padding: clamp(32px, 7vw, 96px);
+    background:
+        radial-gradient(circle at 12% 92%, rgba(239, 232, 216, 0.14), transparent 24%),
+        radial-gradient(circle at 95% 6%, rgba(199, 100, 42, 0.22), transparent 22%),
+        linear-gradient(135deg, #123a57 0%, #1c2630 54%, #2f1b1d 100%);
+}
+
+.auth-brand-panel::before,
+.auth-brand-panel::after {
+    content: "";
+    position: absolute;
+    border: 1px solid rgba(239, 232, 216, 0.11);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.auth-brand-panel::before {
+    width: 260px;
+    height: 260px;
+    left: -90px;
+    bottom: -90px;
+}
+
+.auth-brand-panel::after {
+    width: 210px;
+    height: 210px;
+    right: -42px;
+    top: -42px;
+}
+
+.auth-form-panel {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: clamp(20px, 5vw, 64px);
+    background:
+        radial-gradient(circle at 88% 12%, rgba(199, 100, 42, 0.23), transparent 28%),
+        linear-gradient(135deg, #050608 0%, #0c0d10 58%, #1f0e0f 100%);
+}
+
+@media (max-width: 860px) {
+    .auth-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-brand-panel {
+        min-height: 260px;
+        padding: 32px 22px;
+    }
+
+    .auth-form-panel {
+        min-height: calc(100vh - 260px);
+        padding: 22px 14px 30px;
+    }
+}
 `;
 
 function getCsrfToken() {
@@ -138,16 +218,24 @@ async function postJson<T>(url: string, payload: Record<string, unknown>): Promi
         headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': getCsrfToken(),
         },
         credentials: 'same-origin',
         body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') ?? '';
+    const data = contentType.includes('application/json')
+        ? await response.json()
+        : {
+            message: response.ok
+                ? 'Solicitud completada.'
+                : 'No se pudo completar la solicitud. Verifica los datos e intenta de nuevo.',
+        };
 
     if (!response.ok) {
-        throw data;
+        throw new RequestError(data.message ?? 'No se pudo completar la solicitud.', data.errors ?? {});
     }
 
     return data as T;
@@ -182,6 +270,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
     });
     const [errors, setErrors] = React.useState<Record<string, string[]>>({});
     const [message, setMessage] = React.useState('');
+    const [messageType, setMessageType] = React.useState<'success' | 'error'>('success');
     const [loading, setLoading] = React.useState(false);
 
     React.useEffect(() => {
@@ -191,6 +280,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
 
         if (notice) {
             setMessage(notice);
+            setMessageType('success');
             window.sessionStorage.removeItem('auth_notice');
         }
     }, [mode]);
@@ -207,6 +297,7 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
         setIsTransitioning(true);
         setErrors({});
         setMessage('');
+        setMessageType('success');
         setActiveMode(nextMode);
         window.history.replaceState({}, '', nextMode === 'register' ? '/registrar' : '/login');
         window.setTimeout(() => setIsTransitioning(false), 850);
@@ -266,7 +357,12 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
             const endpoint = isRegisterMode ? '/auth/register' : '/auth/login';
             const response = await postJson<AuthResponse>(endpoint, payload);
 
+            if (isRegisterMode && !response.user) {
+                throw new RequestError('No se pudo crear la cuenta. Intenta de nuevo.');
+            }
+
             setMessage(response.message);
+            setMessageType('success');
 
             if (isRegisterMode) {
                 window.sessionStorage.setItem('auth_notice', 'Cuenta creada correctamente. Ahora puedes iniciar sesión.');
@@ -275,15 +371,21 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
             }
 
             window.sessionStorage.setItem('auth_notice', 'Sesión iniciada correctamente.');
-            window.location.href = '/buzon';
+            window.location.href = response.user?.user_type === 'admin' ? '/admin' : '/buzon';
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof RequestError) {
+                setErrors(error.errors ?? {});
+                setMessage(Object.keys(error.errors ?? {}).length > 0 ? '' : error.message);
+                setMessageType('error');
+            } else if (error instanceof Error) {
                 setErrors({ recaptcha: [error.message] });
                 setMessage(error.message);
+                setMessageType('error');
             } else {
                 const response = error as AuthResponse;
                 setErrors(response.errors ?? {});
                 setMessage(response.message ?? 'No se pudo completar la solicitud.');
+                setMessageType('error');
             }
         } finally {
             setLoading(false);
@@ -359,7 +461,16 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
                 {fieldError('recaptcha') ? <span style={{ color: '#a73333', fontSize: 13 }}>{fieldError('recaptcha')}</span> : null}
 
                 {message ? (
-                    <div className="auth-message-animated" style={{ borderRadius: 12, padding: '12px 14px', background: '#eef7ef', color: '#1f5e29', border: '1px solid #b5d8b8' }}>
+                    <div
+                        className="auth-message-animated"
+                        style={{
+                            borderRadius: 12,
+                            padding: '12px 14px',
+                            background: messageType === 'success' ? '#eef7ef' : '#fff0f0',
+                            color: messageType === 'success' ? '#1f5e29' : '#a73333',
+                            border: `1px solid ${messageType === 'success' ? '#b5d8b8' : '#e3b1b1'}`,
+                        }}
+                    >
                         {message}
                     </div>
                 ) : null}
@@ -420,175 +531,148 @@ export default function AuthFormView({ mode }: { mode: AuthMode }) {
     const cardRotation = activeMode === 'register' ? 0 : 180;
 
     return (
-        <PageLayout>
+        <main className="auth-shell">
             <style>{animationStyles}</style>
 
-            <main style={{ minHeight: 'calc(100vh - 164px)', position: 'relative', overflow: 'hidden' }}>
-                <div
-                    style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'radial-gradient(circle at top left, rgba(199, 100, 42, 0.16), transparent 36%), linear-gradient(180deg, rgba(18, 58, 87, 0.08) 0%, rgba(247, 242, 232, 0.3) 100%)',
-                    }}
-                />
+            <section className="auth-brand-panel" aria-label="PetWord">
+                <div style={{ position: 'relative', zIndex: 1, display: 'grid', gap: 22, maxWidth: 520 }}>
+                    <img
+                        src="/images/pertword.png"
+                        alt="PetWord"
+                        style={{
+                            width: 'min(420px, 72vw)',
+                            height: 'auto',
+                            filter: 'drop-shadow(0 22px 38px rgba(0, 0, 0, 0.32))',
+                        }}
+                    />
+                </div>
+            </section>
 
-                <div
-                    onClick={closeModal}
-                    className="auth-backdrop-animated"
+            <section className="auth-form-panel">
+                <section
+                    className="auth-modal-animated"
                     style={{
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 30,
-                        display: 'grid',
-                        placeItems: 'center',
-                        alignItems: 'start',
-                        padding: 16,
+                        width: 'min(100%, 520px)',
+                        position: 'relative',
+                        padding: 'clamp(24px, 4vw, 34px)',
+                        maxHeight: 'calc(100vh - 36px)',
                         overflowY: 'auto',
-                        background: 'rgba(12, 40, 62, 0.22)',
-                        backdropFilter: 'blur(10px)',
+                        borderRadius: 18,
+                        background: 'rgba(247, 242, 232, 0.98)',
+                        border: `1px solid rgba(216, 203, 179, 0.34)`,
+                        boxShadow: '0 30px 80px rgba(0, 0, 0, 0.46)',
                     }}
                 >
-                    <section
-                        onClick={(event) => event.stopPropagation()}
-                        className="auth-modal-animated"
+                    <a
+                        href="/"
+                        aria-label="Volver al inicio"
+                        onClick={(event) => {
+                            event.preventDefault();
+                            closeModal();
+                        }}
+                        className="auth-close-btn-animated"
                         style={{
-                            width: 'min(100%, 560px)',
-                            position: 'relative',
-                            padding: 32,
-                            margin: '16px 0',
-                            maxHeight: 'calc(100vh - 32px)',
-                            overflowY: 'auto',
-                            borderRadius: 24,
-                            background: 'rgba(247, 242, 232, 0.98)',
-                            border: `1px solid rgba(216, 203, 179, 0.9)`,
-                            boxShadow: '0 28px 60px rgba(12, 40, 62, 0.24)',
+                            position: 'absolute',
+                            top: 16,
+                            right: 16,
+                            width: 36,
+                            height: 36,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 999,
+                            textDecoration: 'none',
+                            color: brandTheme.navyDeep,
+                            background: 'rgba(18, 58, 87, 0.06)',
+                            fontSize: 20,
+                            fontWeight: 700,
                         }}
                     >
-                        <a
-                            href="/"
-                            aria-label="Cerrar formulario"
-                            onClick={(event) => {
-                                event.preventDefault();
-                                closeModal();
-                            }}
-                            className="auth-close-btn-animated"
-                            style={{
-                                position: 'absolute',
-                                top: 16,
-                                right: 16,
-                                width: 36,
-                                height: 36,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: 999,
-                                textDecoration: 'none',
-                                color: brandTheme.navyDeep,
-                                background: 'rgba(18, 58, 87, 0.06)',
-                                fontSize: 20,
-                                fontWeight: 700,
-                            }}
-                        >
-                            ×
-                        </a>
+                        x
+                    </a>
 
-                        <div style={{ display: 'grid', gap: 16 }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-                                <div>
-                                    <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
-                                        {activeMode === 'register' ? 'Registro' : 'Autenticación'}
-                                    </span>
-                                    <h1 style={{ margin: '8px 0 0', color: brandTheme.navy, fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.15 }}>
-                                        {activeMode === 'register' ? 'Crea tu cuenta' : 'Inicia sesión'}
-                                    </h1>
-                                </div>
-                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => switchMode('register')}
-                                        style={{
-                                            border: activeMode === 'register' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
-                                            borderRadius: 999,
-                                            padding: '8px 12px',
-                                            background: activeMode === 'register' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
-                                            color: brandTheme.navy,
-                                            fontWeight: 700,
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        Registro
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => switchMode('login')}
-                                        style={{
-                                            border: activeMode === 'login' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
-                                            borderRadius: 999,
-                                            padding: '8px 12px',
-                                            background: activeMode === 'login' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
-                                            color: brandTheme.navy,
-                                            fontWeight: 700,
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        Inicio
-                                    </button>
-                                </div>
+                    <div style={{ display: 'grid', gap: 16 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, alignItems: 'center', paddingRight: 42 }}>
+                            <div>
+                                <span style={{ color: brandTheme.orange, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
+                                    {activeMode === 'register' ? 'Registro' : 'Acceso'}
+                                </span>
+                                <h2 style={{ margin: '8px 0 0', color: brandTheme.navy, fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.15 }}>
+                                    {activeMode === 'register' ? 'Crea tu cuenta' : 'Iniciar sesión'}
+                                </h2>
                             </div>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => switchMode('register')}
+                                    style={{
+                                        border: activeMode === 'register' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
+                                        borderRadius: 999,
+                                        padding: '8px 12px',
+                                        background: activeMode === 'register' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
+                                        color: brandTheme.navy,
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Registro
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => switchMode('login')}
+                                    style={{
+                                        border: activeMode === 'login' ? `1px solid ${brandTheme.orange}` : '1px solid rgba(18, 58, 87, 0.14)',
+                                        borderRadius: 999,
+                                        padding: '8px 12px',
+                                        background: activeMode === 'login' ? 'rgba(199, 100, 42, 0.14)' : 'rgba(18, 58, 87, 0.05)',
+                                        color: brandTheme.navy,
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Inicio
+                                </button>
+                            </div>
+                        </div>
 
-                            <div style={{ perspective: '1600px' }}>
+                        <div style={{ perspective: '1600px' }}>
+                            <div
+                                style={{
+                                    position: 'relative',
+                                    transformStyle: 'preserve-3d',
+                                    transition: 'transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                                    transform: `rotateY(${cardRotation}deg)`,
+                                }}
+                            >
                                 <div
                                     style={{
                                         position: 'relative',
-                                        transformStyle: 'preserve-3d',
-                                        transition: 'transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                                        transform: `rotateY(${cardRotation}deg)`,
+                                        backfaceVisibility: 'hidden',
+                                        transform: 'rotateY(0deg)',
                                     }}
                                 >
-                                    <div
-                                        style={{
-                                            position: 'relative',
-                                            backfaceVisibility: 'hidden',
-                                            transform: 'rotateY(0deg)',
-                                        }}
-                                    >
-                                        <form onSubmit={(event) => handleSubmit(event, 'register')} style={{ display: 'grid', gap: 16 }}>
-                                            {renderFormContent('register')}
-                                        </form>
-                                    </div>
+                                    <form onSubmit={(event) => handleSubmit(event, 'register')} style={{ display: 'grid', gap: 16 }}>
+                                        {renderFormContent('register')}
+                                    </form>
+                                </div>
 
-                                    <div
-                                        style={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            backfaceVisibility: 'hidden',
-                                            transform: 'rotateY(180deg)',
-                                        }}
-                                    >
-                                        <form onSubmit={(event) => handleSubmit(event, 'login')} style={{ display: 'grid', gap: 16 }}>
-                                            {renderFormContent('login')}
-                                        </form>
-                                    </div>
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        backfaceVisibility: 'hidden',
+                                        transform: 'rotateY(180deg)',
+                                    }}
+                                >
+                                    <form onSubmit={(event) => handleSubmit(event, 'login')} style={{ display: 'grid', gap: 16 }}>
+                                        {renderFormContent('login')}
+                                    </form>
                                 </div>
                             </div>
-
-                            <div style={{ marginTop: 14, textAlign: 'center' }}>
-                                <a
-                                    href="/"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        closeModal();
-                                    }}
-                                    className="auth-footer-link-animated"
-                                    style={{ color: brandTheme.muted, textDecoration: 'none', fontSize: 14 }}
-                                >
-                                    Volver al inicio
-                                </a>
-                            </div>
                         </div>
-                    </section>
-                </div>
-            </main>
-        </PageLayout>
+                    </div>
+                </section>
+            </section>
+        </main>
     );
 }

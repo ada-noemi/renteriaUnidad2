@@ -20,6 +20,7 @@ import ChatBotView from './pages/ChatBotView';
 import HelpView from './pages/HelpView';
 import ContactView from './pages/ContactView';
 import ErrorView from './pages/ErrorView';
+import AdminDashboardView from './pages/AdminDashboardView';
 import PageLayout from './components/PageLayout';
 import { brandTheme } from './theme';
 
@@ -29,6 +30,7 @@ type AuthStatus = {
         id: number;
         name: string;
         email: string;
+        user_type?: 'cliente' | 'admin';
     } | null;
 };
 
@@ -61,6 +63,8 @@ function AccessRequiredView() {
     return null;
 }
 
+const replacedSessionMessage = 'Se inició sesión en otro navegador. Por seguridad cerramos esta sesión.';
+
 function AppRouter() {
     const [authState, setAuthState] = React.useState<AuthStatus>({ authenticated: false, user: null });
     const [authLoading, setAuthLoading] = React.useState(true);
@@ -75,8 +79,15 @@ function AppRouter() {
                     credentials: 'same-origin',
                     headers: {
                         Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                     },
                 });
+
+                if (response.status === 401) {
+                    window.sessionStorage.setItem('auth_notice', replacedSessionMessage);
+                    window.location.replace('/login');
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error('No se pudo consultar la sesión actual.');
@@ -108,6 +119,51 @@ function AppRouter() {
         };
     }, []);
 
+    React.useEffect(() => {
+        if (authLoading || !authState.authenticated) {
+            return undefined;
+        }
+
+        async function checkActiveSession() {
+            try {
+                const response = await fetch('/auth/status', {
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                if (response.status === 401) {
+                    window.sessionStorage.setItem('auth_notice', replacedSessionMessage);
+                    window.location.replace('/login');
+                    return;
+                }
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = (await response.json()) as AuthStatus;
+
+                if (!data.authenticated) {
+                    window.sessionStorage.setItem('auth_notice', 'Tu sesión terminó. Inicia sesión de nuevo.');
+                    window.location.replace('/login');
+                }
+            } catch {
+                // Si la conexión falla momentáneamente, no cerramos la sesión por error.
+            }
+        }
+
+        const intervalId = window.setInterval(checkActiveSession, 12000);
+        window.addEventListener('focus', checkActiveSession);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', checkActiveSession);
+        };
+    }, [authLoading, authState.authenticated]);
+
     function renderProtectedView(view: React.ReactNode) {
         if (authLoading) {
             return null;
@@ -122,7 +178,11 @@ function AppRouter() {
 
     switch (path) {
         case '/':
-            return <Home isAuthenticated={authState.authenticated} />;
+            if (authLoading) {
+                return null;
+            }
+
+            return authState.authenticated ? <Home isAuthenticated={authState.authenticated} /> : <LoginView />;
         case '/categorias':
             return <CategoriesView />;
         case '/categorias/aves':
@@ -161,6 +221,8 @@ function AppRouter() {
             return <PasswordRecoveryView />;
         case '/chat':
             return renderProtectedView(<ChatBotView />);
+        case '/admin':
+            return renderProtectedView(authState.user?.user_type === 'admin' ? <AdminDashboardView /> : <ErrorView />);
         case '/carrito':
             return <SectionView title="Carrito" description="Vista estática del carrito. Solo muestra la ubicación del elemento en la navegación, sin operaciones ni backend." />;
         case '/busqueda':
